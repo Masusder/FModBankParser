@@ -19,6 +19,7 @@ public class FModReader
     public readonly Dictionary<FModGuid, InstrumentNode> InstrumentNodes = [];
     public readonly Dictionary<FModGuid, WaveformResourceNode> WavEntries = [];
     public readonly Dictionary<FModGuid, ScattererInstrumentNode> ScattererInstrumentNodes = [];
+    public readonly Dictionary<FModGuid, ParameterNode> ParameterNodes = [];
     public readonly Dictionary<FModGuid, FModGuid> WaveformInstrumentNodes = [];
     public List<FmodSoundBank> SoundBankData = [];
 
@@ -64,8 +65,19 @@ public class FModReader
         while (Ar.BaseStream.Position + 8 <= end)
         {
             long nodeStart = Ar.BaseStream.Position;
-            var nodeId = (ENodeId)Ar.ReadInt32();
+            var rawNodeValue = Ar.ReadInt32();
+
+            if (rawNodeValue == 0x53494C00) // End of a list 'LIS/0'
+            {
+                Ar.BaseStream.Position -= 3;
+                rawNodeValue = Ar.ReadInt32();
+            }
+
+            var nodeId = (ENodeId)rawNodeValue;
+
             int nodeSize = Ar.ReadInt32();
+            if (nodeId == ENodeId.CHUNKID_BUILTINEFFECTBODY) nodeSize++;
+
             long nextNode = nodeStart + 8 + nodeSize;
 
             switch (nodeId)
@@ -90,6 +102,13 @@ public class FModReader
                     {
                         //var node = new ModulatorNode(Ar);
                         //ModulatorNodes[node.BaseGuid] = node;
+                        break;
+                    }
+
+                case ENodeId.CHUNKID_PARAMETERBODY: // Parameter Node
+                    {
+                        var node = new ParameterNode(Ar);
+                        ParameterNodes[node.BaseGuid] = node;
                         break;
                     }
 
@@ -193,10 +212,11 @@ public class FModReader
 
     public static string ReadSerializedString(BinaryReader Ar)
     {
-        int len = Ar.ReadInt32();
-        if (len <= 0) return string.Empty;
+        uint length = ReadX16(Ar);
 
-        var bytes = Ar.ReadBytes(len);
+        if (length <= 0) return string.Empty;
+        
+        var bytes = Ar.ReadBytes((int)length);
 
         return Encoding.UTF8.GetString(bytes);
     }
