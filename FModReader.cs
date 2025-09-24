@@ -1,0 +1,238 @@
+﻿using Fmod5Sharp.FmodTypes;
+using FModUEParser.Nodes;
+using FModUEParser.Objects;
+using FModUEParser.Extensions;
+using System.Reflection.PortableExecutable;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Xml;
+
+namespace FModUEParser;
+
+public class FModReader
+{
+    public static FormatInfo FormatInfo { get; private set; } = null!;
+    public static int Version => FormatInfo.FileVersion;
+    public readonly Dictionary<FModGuid, EventNode> EventNodes = [];
+    public readonly Dictionary<FModGuid, TimelineNode> TimelineNodes = [];
+    public readonly Dictionary<FModGuid, PlaylistNode> PlaylistNodes = [];
+    public readonly Dictionary<FModGuid, InstrumentNode> InstrumentNodes = [];
+    public readonly Dictionary<FModGuid, WaveformResourceNode> WavEntries = [];
+    public readonly Dictionary<FModGuid, ScattererInstrumentNode> ScattererInstrumentNodes = [];
+    public readonly Dictionary<FModGuid, FModGuid> WaveformInstrumentNodes = [];
+    public List<FmodSoundBank> SoundBankData = [];
+
+    public readonly Dictionary<FModGuid, List<FmodSample>> ResolvedEvents = [];
+
+    public FModReader(BinaryReader Ar)
+    {
+        ParseHeader(Ar);
+        ParseNodes(Ar, Ar.BaseStream.Position, Ar.BaseStream.Length);
+        EventNodesResolver.ResolveAudioEvents(this); // temp
+    }
+
+    private static void ParseHeader(BinaryReader Ar)
+    {
+        if (Ar.BaseStream.Length < 12)
+            throw new Exception("File too small to be a valid RIFF header");
+
+        string riff = Encoding.ASCII.GetString(Ar.ReadBytes(4));
+        if (riff != "RIFF") throw new Exception("Not a valid RIFF file");
+
+        int riffSize = Ar.ReadInt32();
+        string fileType = Encoding.ASCII.GetString(Ar.ReadBytes(4));
+        if (fileType != "FEV ") throw new Exception("Not a valid FMOD bank");
+
+        long expectedSize = riffSize + 8;
+        long actualSize = Ar.BaseStream.Length;
+
+        if (actualSize < expectedSize)
+            throw new Exception($"Truncated file: expected {expectedSize} bytes, got {actualSize}");
+        else if (actualSize > expectedSize)
+            Console.WriteLine($"Warning: file larger than RIFF size (expected {expectedSize}, got {actualSize})");
+
+        Console.WriteLine($"FMod bank detected, size={riffSize}, type={fileType}");
+    }
+
+    private void ParseNodes(BinaryReader Ar, long start, long end)
+    {
+        Ar.BaseStream.Position = start;
+
+        FModGuid? currentMuitGuid = null;
+        bool visitedSoundNode = false;
+
+        while (Ar.BaseStream.Position + 8 <= end)
+        {
+            long nodeStart = Ar.BaseStream.Position;
+            var nodeId = (ENodeId)Ar.ReadInt32();
+            int nodeSize = Ar.ReadInt32();
+            long nextNode = nodeStart + 8 + nodeSize;
+
+            switch (nodeId)
+            {
+                case ENodeId.CHUNKID_FORMATINFO:
+                    FormatInfo = new FormatInfo(Ar);
+                    break;
+
+                case ENodeId.CHUNKID_LIST: // List of sub-chunks
+                    var listNodeId = (ENodeId)Ar.ReadInt32();
+                    ParseNodes(Ar, Ar.BaseStream.Position, nextNode);
+                    break;
+
+                case ENodeId.CHUNKID_EVENTBODY: // Audio Event Node
+                    {
+                        var node = new EventNode(Ar);
+                        EventNodes[node.BaseGuid] = node;
+                        break;
+                    }
+
+                case ENodeId.CHUNKID_MODULATORBODY: // Modulator Node
+                    {
+                        //var node = new ModulatorNode(Ar);
+                        //ModulatorNodes[node.BaseGuid] = node;
+                        break;
+                    }
+
+                case ENodeId.CHUNKID_WAVEFORMRESOURCE: // Single WAV Node
+                    {
+                        var node = new WaveformResourceNode(Ar);
+                        WavEntries[node.BaseGuid] = node;
+                        break;
+                    }
+
+                case ENodeId.CHUNKID_SCATTERERINSTRUMENTBODY: // Scatterer Instrument Node
+                    {
+                        var node = new ScattererInstrumentNode(Ar);
+                        ScattererInstrumentNodes[node.BaseGuid] = node;
+                        break;
+                    }
+
+                case ENodeId.CHUNKID_MULTIINSTRUMENTBODY: // Multi Instrument Node
+                    currentMuitGuid = new FModGuid(Ar); // Multi simply points to playlist which always comes as next node
+                    break;
+
+                case ENodeId.CHUNKID_WAVEFORMINSTRUMENTBODY: // Waveform Instrument Node
+                    {
+                        var node = new WaveformInstrumentNode(Ar);
+
+                        WaveformInstrumentNodes[node.BaseGuid] = node.WaveformResourceGuid;
+                        break;
+                    }
+
+                case ENodeId.CHUNKID_INSTRUMENT: // Instrument Node
+                    {
+                        var node = new InstrumentNode(Ar);
+                        InstrumentNodes[node.BaseGuid] = node;
+                        break;
+                    }
+
+                case ENodeId.CHUNKID_TIMELINEBODY: // Timeline Node
+                    {
+                        var node = new TimelineNode(Ar);
+                        TimelineNodes[node.BaseGuid] = node;
+                        break;
+                    }
+
+                case ENodeId.CHUNKID_PLAYLIST: // Playlist Node
+                    if (currentMuitGuid != null)
+                    {
+                        PlaylistNodes[currentMuitGuid.Value] = new PlaylistNode(Ar);
+                        currentMuitGuid = null;
+                    }
+                    break;
+
+                case ENodeId.CHUNKID_SOUNDDATA: // Sound Data Node
+                    {
+                        var node = new SoundDataNode(Ar, nodeSize);
+                        visitedSoundNode = true;
+                        if (node.SoundBank != null)
+                        {
+                            SoundBankData.Add(node.SoundBank);
+                        }
+                        break;
+                    }
+
+                default:
+                    Console.WriteLine($"Unknown chunk {nodeId} at {nodeStart}, size={nodeSize}, skipped");
+                    break;
+            }
+
+            // Stop if we already visited a sound node and current node is NOT sound node
+            // Not sure why I need to do that but I've seen soundbanks that write duplicated FSB data outside of SND chunk
+            // It's important to note there might be multiple SND chunks so we can't just stop after first SND
+            if (visitedSoundNode && nodeId != ENodeId.CHUNKID_SOUNDDATA)
+                break;
+
+            if (Ar.BaseStream.Position != nextNode)
+            {
+                Console.WriteLine($"Warning: chunk {nodeId} did not parse fully (at {Ar.BaseStream.Position}, should be {nextNode})");
+                Ar.BaseStream.Position = nextNode;
+            }
+            else
+            {
+                Console.WriteLine($"Chunk {nodeId} parsed successfully ({nodeStart} -> {nextNode})");
+            }
+        }
+    }
+
+    #region Global Readers
+
+    public static uint ReadX16(BinaryReader Ar)
+    {
+        short signedLow = Ar.ReadInt16();
+        ushort low = (ushort)signedLow;
+        uint value = low;
+        if ((low & 0x8000) != 0)
+        {
+            ushort high = Ar.ReadUInt16();
+            value &= 0x7FFFu;
+            value |= ((uint)high << 15);
+        }
+        return value;
+    }
+
+    public static string ReadSerializedString(BinaryReader Ar)
+    {
+        int len = Ar.ReadInt32();
+        if (len <= 0) return string.Empty;
+
+        var bytes = Ar.ReadBytes(len);
+
+        return Encoding.UTF8.GetString(bytes);
+    }
+
+    public static T[] ReadElemListImp<T>(BinaryReader Ar, int? size = null)
+    {
+
+        uint raw = ReadX16(Ar);
+        int count = (int)(raw >> 1);
+        bool hasSizePrefix = (raw & 1) != 0; // Element list "size prefix" is a single size value used for the element payloads
+
+        if (count <= 0) return [];
+
+        var result = new T[count];
+
+        ushort elementSize = 0;
+        if (hasSizePrefix)
+        {
+            elementSize = Ar.ReadUInt16();
+        }
+
+        for (int i = 0; i < count; i++)
+        {
+            // I don't know what do in case where the element size is different than expected so I'll just skip it
+            if (hasSizePrefix && size != null && elementSize != size)
+            {
+                Ar.BaseStream.Position += elementSize;
+            }
+            else
+            {
+                result[i] = (T)Activator.CreateInstance(typeof(T), Ar)!;
+            }
+        }
+
+        return result;
+    }
+
+    #endregion
+}
