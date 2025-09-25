@@ -24,6 +24,7 @@ public class FModReader
     public readonly Dictionary<FModGuid, ModulatorNode> ModulatorNodes = [];
     public readonly Dictionary<FModGuid, FModGuid> WaveformInstrumentNodes = [];
     public List<FmodSoundBank> SoundBankData = [];
+    public FHashData[] HashData = [];
 
     public readonly Dictionary<FModGuid, List<FmodSample>> ResolvedEvents = [];
 
@@ -178,6 +179,12 @@ public class FModReader
                     case ENodeId.CHUNKID_BUILTINEFFECTBODY:
                         {
                             Ar.ReadByte(); // Unknown byte that isn't a part of BEFF body
+                        }
+                        break;
+
+                    case ENodeId.CHUNKID_HASHDATA:
+                        {
+                            HashData = new HashDataNode(Ar).HashData;
                         }
                         break;
 
