@@ -11,6 +11,7 @@ namespace FModUEParser;
 
 public class FModReader
 {
+    private const int EndOfList = 0x53494C00; // "\0LIS"
     public static FormatInfo FormatInfo { get; private set; } = null!;
     public static int Version => FormatInfo.FileVersion;
     public readonly Dictionary<FModGuid, EventNode> EventNodes = [];
@@ -20,6 +21,7 @@ public class FModReader
     public readonly Dictionary<FModGuid, WaveformResourceNode> WavEntries = [];
     public readonly Dictionary<FModGuid, ScattererInstrumentNode> ScattererInstrumentNodes = [];
     public readonly Dictionary<FModGuid, ParameterNode> ParameterNodes = [];
+    public readonly Dictionary<FModGuid, ModulatorNode> ModulatorNodes = [];
     public readonly Dictionary<FModGuid, FModGuid> WaveformInstrumentNodes = [];
     public List<FmodSoundBank> SoundBankData = [];
 
@@ -67,8 +69,10 @@ public class FModReader
             long nodeStart = Ar.BaseStream.Position;
             var rawNodeValue = Ar.ReadInt32();
 
-            if (rawNodeValue == 0x53494C00) // End of a list 'LIS/0'
+            // Shift \0LIS to LIST
+            if (rawNodeValue == EndOfList)
             {
+                nodeStart = Ar.BaseStream.Position - 3;
                 Ar.BaseStream.Position -= 3;
                 rawNodeValue = Ar.ReadInt32();
             }
@@ -76,104 +80,122 @@ public class FModReader
             var nodeId = (ENodeId)rawNodeValue;
 
             int nodeSize = Ar.ReadInt32();
-            if (nodeId == ENodeId.CHUNKID_BUILTINEFFECTBODY) nodeSize++;
+            if (nodeId is ENodeId.CHUNKID_BUILTINEFFECTBODY) nodeSize++;
 
             long nextNode = nodeStart + 8 + nodeSize;
 
-            switch (nodeId)
+            if (nodeSize != 0)
             {
-                case ENodeId.CHUNKID_FORMATINFO:
-                    FormatInfo = new FormatInfo(Ar);
-                    break;
-
-                case ENodeId.CHUNKID_LIST: // List of sub-chunks
-                    var listNodeId = (ENodeId)Ar.ReadInt32();
-                    ParseNodes(Ar, Ar.BaseStream.Position, nextNode);
-                    break;
-
-                case ENodeId.CHUNKID_EVENTBODY: // Audio Event Node
-                    {
-                        var node = new EventNode(Ar);
-                        EventNodes[node.BaseGuid] = node;
+                switch (nodeId)
+                {
+                    case ENodeId.CHUNKID_FORMATINFO:
+                        FormatInfo = new FormatInfo(Ar);
                         break;
-                    }
 
-                case ENodeId.CHUNKID_MODULATORBODY: // Modulator Node
-                    {
-                        //var node = new ModulatorNode(Ar);
-                        //ModulatorNodes[node.BaseGuid] = node;
+                    case ENodeId.CHUNKID_LIST: // List of sub-chunks
+                        var listNodeId = (ENodeId)Ar.ReadInt32();
+                        ParseNodes(Ar, Ar.BaseStream.Position, nextNode);
                         break;
-                    }
 
-                case ENodeId.CHUNKID_PARAMETERBODY: // Parameter Node
-                    {
-                        var node = new ParameterNode(Ar);
-                        ParameterNodes[node.BaseGuid] = node;
+                    case ENodeId.CHUNKID_LISTCOUNT:
+                        var listCount = Ar.ReadUInt32();
                         break;
-                    }
 
-                case ENodeId.CHUNKID_WAVEFORMRESOURCE: // Single WAV Node
-                    {
-                        var node = new WaveformResourceNode(Ar);
-                        WavEntries[node.BaseGuid] = node;
-                        break;
-                    }
-
-                case ENodeId.CHUNKID_SCATTERERINSTRUMENTBODY: // Scatterer Instrument Node
-                    {
-                        var node = new ScattererInstrumentNode(Ar);
-                        ScattererInstrumentNodes[node.BaseGuid] = node;
-                        break;
-                    }
-
-                case ENodeId.CHUNKID_MULTIINSTRUMENTBODY: // Multi Instrument Node
-                    currentMuitGuid = new FModGuid(Ar); // Multi simply points to playlist which always comes as next node
-                    break;
-
-                case ENodeId.CHUNKID_WAVEFORMINSTRUMENTBODY: // Waveform Instrument Node
-                    {
-                        var node = new WaveformInstrumentNode(Ar);
-
-                        WaveformInstrumentNodes[node.BaseGuid] = node.WaveformResourceGuid;
-                        break;
-                    }
-
-                case ENodeId.CHUNKID_INSTRUMENT: // Instrument Node
-                    {
-                        var node = new InstrumentNode(Ar);
-                        InstrumentNodes[node.BaseGuid] = node;
-                        break;
-                    }
-
-                case ENodeId.CHUNKID_TIMELINEBODY: // Timeline Node
-                    {
-                        var node = new TimelineNode(Ar);
-                        TimelineNodes[node.BaseGuid] = node;
-                        break;
-                    }
-
-                case ENodeId.CHUNKID_PLAYLIST: // Playlist Node
-                    if (currentMuitGuid != null)
-                    {
-                        PlaylistNodes[currentMuitGuid.Value] = new PlaylistNode(Ar);
-                        currentMuitGuid = null;
-                    }
-                    break;
-
-                case ENodeId.CHUNKID_SOUNDDATA: // Sound Data Node
-                    {
-                        var node = new SoundDataNode(Ar, nodeSize);
-                        visitedSoundNode = true;
-                        if (node.SoundBank != null)
+                    case ENodeId.CHUNKID_EVENTBODY: // Audio Event Node
                         {
-                            SoundBankData.Add(node.SoundBank);
+                            var node = new EventNode(Ar);
+                            EventNodes[node.BaseGuid] = node;
                         }
                         break;
-                    }
 
-                default:
-                    Console.WriteLine($"Unknown chunk {nodeId} at {nodeStart}, size={nodeSize}, skipped");
-                    break;
+                    case ENodeId.CHUNKID_MODULATORBODY: // Modulator Node
+                        {
+                            var node = new ModulatorNode(Ar);
+                            ModulatorNodes[node.BaseGuid] = node;
+                        }
+                        break;
+
+                    case ENodeId.CHUNKID_STRINGDATA: // String Data Node
+                        {
+                            var node = new StringDataNode(Ar);
+                        }
+                        break;
+
+                    case ENodeId.CHUNKID_PARAMETERBODY: // Parameter Node
+                        {
+                            var node = new ParameterNode(Ar);
+                            ParameterNodes[node.BaseGuid] = node;
+                        }
+                        break;
+
+                    case ENodeId.CHUNKID_WAVEFORMRESOURCE: // Single WAV Node
+                        {
+                            var node = new WaveformResourceNode(Ar);
+                            WavEntries[node.BaseGuid] = node;
+                        }
+                        break;
+
+                    case ENodeId.CHUNKID_SCATTERERINSTRUMENTBODY: // Scatterer Instrument Node
+                        {
+                            var node = new ScattererInstrumentNode(Ar);
+                            ScattererInstrumentNodes[node.BaseGuid] = node;
+                        }
+                        break;
+
+                    case ENodeId.CHUNKID_MULTIINSTRUMENTBODY: // Multi Instrument Node
+                        currentMuitGuid = new FModGuid(Ar); // Multi simply points to playlist which always comes as a next node
+                        break;
+
+                    case ENodeId.CHUNKID_WAVEFORMINSTRUMENTBODY: // Waveform Instrument Node
+                        {
+                            var node = new WaveformInstrumentNode(Ar);
+                            WaveformInstrumentNodes[node.BaseGuid] = node.WaveformResourceGuid;
+                        }
+                        break;
+
+                    case ENodeId.CHUNKID_INSTRUMENT: // Instrument Node
+                        {
+                            var node = new InstrumentNode(Ar);
+                            InstrumentNodes[node.BaseGuid] = node;
+                        }
+                        break;
+
+                    case ENodeId.CHUNKID_TIMELINEBODY: // Timeline Node
+                        {
+                            var node = new TimelineNode(Ar);
+                            TimelineNodes[node.BaseGuid] = node;
+                        }
+                        break;
+
+                    case ENodeId.CHUNKID_PLAYLIST: // Playlist Node
+                        if (currentMuitGuid != null)
+                        {
+                            PlaylistNodes[currentMuitGuid.Value] = new PlaylistNode(Ar);
+                            currentMuitGuid = null;
+                        }
+                        break;
+
+                    case ENodeId.CHUNKID_BUILTINEFFECTBODY:
+                        {
+                            Ar.ReadByte(); // Unknown byte that isn't a part of BEFF body
+                        }
+                        break;
+
+                    case ENodeId.CHUNKID_SOUNDDATA: // Sound Data Node
+                        {
+                            var node = new SoundDataNode(Ar, nodeSize);
+                            visitedSoundNode = true;
+                            if (node.SoundBank != null)
+                            {
+                                SoundBankData.Add(node.SoundBank);
+                            }
+                        }
+                        break;
+
+                    default:
+                        Console.WriteLine($"Unknown chunk {nodeId} at {nodeStart}, size={nodeSize}, skipped");
+                        break;
+                }
             }
 
             // Stop if we already visited a sound node and current node is NOT sound node
@@ -215,7 +237,7 @@ public class FModReader
         uint length = ReadX16(Ar);
 
         if (length <= 0) return string.Empty;
-        
+
         var bytes = Ar.ReadBytes((int)length);
 
         return Encoding.UTF8.GetString(bytes);

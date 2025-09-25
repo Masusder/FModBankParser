@@ -10,13 +10,13 @@ namespace FModUEParser.Nodes.ModulatorSubnodes;
 
 public class SpectralSidechainModulatorNode
 {
-    public float Amount { get; set; }
-    public ESpectralSidechainModulatorMode Mode { get; set; }
-    public float ThresholdMinimum { get; set; }
-    public float ThresholdMaximum { get; set; }
-    public float AttackTime { get; set; }
-    public float ReleaseTime { get; set; }
-    public FModGuid ThresholdMapping { get; set; }
+    public readonly float Amount;
+    public readonly ESpectralSidechainModulatorMode Mode;
+    public readonly float ThresholdMinimum;
+    public readonly float ThresholdMaximum;
+    public readonly float AttackTime;
+    public readonly float ReleaseTime;
+    public readonly FModGuid ThresholdMapping;
 
     public SpectralSidechainModulatorNode(BinaryReader Ar)
     {

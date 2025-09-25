@@ -10,33 +10,63 @@ namespace FModUEParser.Nodes;
 
 public class ModulatorNode
 {
-    public readonly EModulatorType Type;
+    public readonly FModGuid BaseGuid;
+    public readonly FModGuid OwnerGuid;
     public readonly int PropertyIndex;
+    public readonly EModulatorType Type;
     public readonly EPropertyType PropertyType;
     public readonly EClockSource ClockSource;
-    public object Subnode{ get; }
+    public readonly object? Subnode;
 
     public ModulatorNode(BinaryReader Ar)
     {
-        Type = (EModulatorType)Ar.ReadInt32();
-        PropertyIndex = Ar.ReadInt32();
-        PropertyType = (EPropertyType)Ar.ReadInt32();
-        ClockSource = (EClockSource)Ar.ReadInt32();
+        Ar.ReadUInt16(); // Unknown
+        BaseGuid = new FModGuid(Ar);
+        OwnerGuid = new FModGuid(Ar);
 
-        if (Type > EModulatorType.SpectralSidechain)
+        PropertyIndex = Ar.ReadInt32();
+        Type = (EModulatorType)Ar.ReadInt32();
+
+        if (FModReader.Version < 0x55)
         {
-            //goto hell;
+            PropertyType = (EPropertyType)Ar.ReadInt32();
+            ClockSource = (EClockSource)Ar.ReadInt32();
+        }
+        else
+        {
+            PropertyType = EPropertyType.PropertyType_Normal;
+            ClockSource = EClockSource.ClockSource_Local;
         }
 
-        Subnode = Type switch
+        // TODO: something is still off
+        switch (Type)
         {
-            EModulatorType.ADSR => new ADSRModulatorNode(Ar),
-            //EModulatorType.Random => new RandomModulatorNode(),
-            EModulatorType.Envelope => new EnvelopeModulatorNode(Ar),
-            //EModulatorType.LFO => new LFOModulatorNode(),
-            //EModulatorType.Seek => new SeekModulatorNode(),
-            EModulatorType.SpectralSidechain => new SpectralSidechainModulatorNode(Ar),
-            _ => throw new InvalidDataException($"Unknown Modulator type {Type}")
-        };
+            case EModulatorType.ADSR:
+                Subnode = new ADSRModulatorNode(Ar);
+                break;
+            case EModulatorType.Random:
+                Subnode = new RandomModulatorNode(Ar);
+                break;
+            case EModulatorType.Envelope:
+                Subnode = new EnvelopeModulatorNode(Ar);
+                break;
+            case EModulatorType.LFO:
+                Subnode = new LFOModulatorNode(Ar);
+                break;
+            case EModulatorType.Seek:
+                Subnode = new SeekModulatorNode(Ar);
+                break;
+            case EModulatorType.SpectralSidechain:
+                Subnode = new SpectralSidechainModulatorNode(Ar);
+                break;
+            default:
+                Console.WriteLine($"Unhandled modulator type {Type} ({(int)Type}) at stream position {Ar.BaseStream.Position}");
+                break;
+        }
+
+        if (Subnode is not RandomModulatorNode && Subnode is not LFOModulatorNode)
+        {
+            Ar.ReadBytes(8); // Unknown
+        }
     }
 }

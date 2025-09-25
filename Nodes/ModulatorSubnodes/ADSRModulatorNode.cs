@@ -9,19 +9,21 @@ namespace FModUEParser.Nodes.ModulatorSubnodes;
 /// ADSR (Attack, Decay, Sustain, Release) modulator
 public class ADSRModulatorNode
 {
-    public float PeakValue { get; }
-    public float SustainValue { get; }
-    public float AttackTime { get; }
-    public float HoldTime { get; }
-    public float DecayTime { get; }
-    public float ReleaseTime { get; }
-    public float AttackShape { get; }
-    public float DecayShape { get; }
-    public float ReleaseShape { get; }
-    public float? FinalValue { get; }
+    public readonly float InitialValue;
+    public readonly float PeakValue;
+    public readonly float SustainValue;
+    public readonly float AttackTime;
+    public readonly float HoldTime;
+    public readonly float DecayTime;
+    public readonly float ReleaseTime;
+    public readonly float AttackShape;
+    public readonly float DecayShape;
+    public readonly float ReleaseShape;
+    public readonly float? FinalValue;
 
     public ADSRModulatorNode(BinaryReader Ar)
     {
+        InitialValue = Ar.ReadSingle();
         PeakValue = Ar.ReadSingle();
         SustainValue = Ar.ReadSingle();
         AttackTime = Ar.ReadSingle();
