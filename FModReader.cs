@@ -32,13 +32,10 @@ public class FModReader
     public List<FmodSoundBank> SoundBankData = [];
     public FHashData[] HashData = [];
 
-    public readonly Dictionary<FModGuid, List<FmodSample>> ResolvedEvents = []; // temp
-
     public FModReader(BinaryReader Ar)
     {
         ParseHeader(Ar);
         ParseNodes(Ar, Ar.BaseStream.Position, Ar.BaseStream.Length);
-        EventNodesResolver.ResolveAudioEvents(this); // temp
     }
 
     private static void ParseHeader(BinaryReader Ar)

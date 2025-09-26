@@ -11,11 +11,24 @@ public class FModUEParser
 {
     static void Main()
     {
-        string bankPath = @"path/to/FMod/soundbank/here.bank";
+        string fmodPath = @"path/to/FMod/soundbanks/here.bank";
 
-        using var Ar = new BinaryReader(File.OpenRead(bankPath));
-        var fmodReader = new FModReader(Ar);
+        if (fmodPath.EndsWith(".bank", StringComparison.OrdinalIgnoreCase))
+        {
+            using var reader = new BinaryReader(File.OpenRead(fmodPath));
+            var fmodReader = new FModReader(reader);
 
-        EventNodesResolver.PrintMissingEventsAndSampleCounts(fmodReader);
+            var resolvedEvents = EventNodesResolver.ResolveAudioEvents(fmodReader);
+            EventNodesResolver.PrintMissingSamples(fmodReader, resolvedEvents);
+        }
+        else
+        {
+            var mergedReaders = FModBankMerger.MergeBanks(fmodPath);
+            foreach (var fmodReader in mergedReaders)
+            {
+                var resolvedEvents = EventNodesResolver.ResolveAudioEvents(fmodReader);
+                EventNodesResolver.PrintMissingSamples(fmodReader, resolvedEvents);
+            }
+        }
     }
 }

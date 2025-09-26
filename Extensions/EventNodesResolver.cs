@@ -8,14 +8,16 @@ namespace FModUEParser.Extensions;
 // TODO: This is just a prototype
 public static class EventNodesResolver
 {
-    public static void ResolveAudioEvents(this FModReader reader)
+    public static Dictionary<FModGuid, List<FmodSample>> ResolveAudioEvents(FModReader reader)
     {
+        var result = new Dictionary<FModGuid, List<FmodSample>>();
         foreach (var (eventGuid, evNode) in reader.EventNodes)
         {
             var samples = ResolveEventNodesWithAudio(reader, evNode);
             if (samples.Count > 0)
-                reader.ResolvedEvents[eventGuid] = samples;
+                result[eventGuid] = samples;
         }
+        return result;
     }
 
     private static List<FmodSample> ResolveEventNodesWithAudio(FModReader reader, EventNode evNode)
@@ -100,20 +102,19 @@ public static class EventNodesResolver
             stack.Push(box.Guid);
     }
 
-    private static HashSet<string> GetAllResolvedSampleNames(FModReader reader)
+    private static HashSet<string> GetAllResolvedSampleNames(Dictionary<FModGuid, List<FmodSample>> resolvedEvents)
     {
         var allResolvedNames = new HashSet<string>();
 
-        foreach (var samples in reader.ResolvedEvents.Values)
+        foreach (var samples in resolvedEvents.Values)
             foreach (var sample in samples)
                 allResolvedNames.Add(sample.Name!);
 
         return allResolvedNames;
     }
 
-    public static Dictionary<FModGuid, FmodSample> GetUnreferencedSamplesWithGuids(FModReader reader)
+    public static Dictionary<FModGuid, FmodSample> GetUnreferencedSamplesWithGuids(FModReader reader, HashSet<string> allResolved)
     {
-        var allResolved = GetAllResolvedSampleNames(reader);
         var unreferenced = new Dictionary<FModGuid, FmodSample>();
 
         foreach (var kvp in reader.WavEntries)
@@ -135,27 +136,26 @@ public static class EventNodesResolver
         return unreferenced;
     }
 
-    public static void PrintMissingEventsAndSampleCounts(FModReader reader)
+    public static void PrintMissingSamples(FModReader reader, Dictionary<FModGuid, List<FmodSample>> resolvedEvents)
     {
-        int sampleCount = 0;
-        foreach (var kv in reader.EventNodes)
+        Console.WriteLine($"----------------");
+        int sampleCount = resolvedEvents.Values.Sum(samples => samples?.Count ?? 0);
+
+        Console.WriteLine($"+ Resolved {sampleCount} audio sample(s)");
+
+        var allResolved = GetAllResolvedSampleNames(resolvedEvents);
+        var unreferencedSamples = GetUnreferencedSamplesWithGuids(reader, allResolved);
+
+        if (unreferencedSamples.Count == 0)
         {
-            FModGuid eventGuid = kv.Key;
-            if (!reader.ResolvedEvents.TryGetValue(eventGuid, out var samples) || samples.Count == 0)
-            {
-                Console.WriteLine($"Missing Event: {eventGuid}");
-                sampleCount += samples?.Count ?? 0;
-            }
-            else
-            {
-                sampleCount += samples.Count;
-            }
+            Console.WriteLine("All audio samples were resolved");
+            return;
         }
 
-        Console.WriteLine($"Resolved {sampleCount} audio sample(s)");
-
-        var unreferencedSamples = GetUnreferencedSamplesWithGuids(reader);
-
-        Console.WriteLine($"Unresolved audio samples: {unreferencedSamples.Count}");
+        Console.WriteLine($"- Unresolved {unreferencedSamples.Count} audio sample(s):");
+        foreach (var sample in unreferencedSamples)
+        {
+            Console.WriteLine($"'{sample.Value.Name}' sample wasn't resolved (GUID: {sample.Key})");
+        }
     }
 }

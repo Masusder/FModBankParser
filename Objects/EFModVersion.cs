@@ -8,7 +8,8 @@ namespace FModUEParser.Objects;
 
 /// <summary>
 /// Tested Unreal Engine games:
-/// - Dispatch Demo (UE 4.27), Militsioner (UE 5.3) - Version: 0x8e
+/// - Dispatch Demo (UE 4.27), Militsioner (UE 5.3), Deadly Days: Roadtrip Demo (UE 5.5) - [Version: 0x8E]
+/// - Dead as Disco Demo (UE 5.5) - [Version: 0x92]
 /// </summary>
 public enum EFModVersion : int
 {
