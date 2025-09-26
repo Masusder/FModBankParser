@@ -12,6 +12,8 @@ namespace FModUEParser;
 public class FModReader
 {
     private const int EndOfList = 0x53494C00; // "\0LIS"
+
+    public BankInfoNode? BankInfo;
     public static FormatInfo FormatInfo { get; private set; } = null!;
     public static int Version => FormatInfo.FileVersion;
     public readonly Dictionary<FModGuid, EventNode> EventNodes = [];
@@ -22,11 +24,12 @@ public class FModReader
     public readonly Dictionary<FModGuid, ScattererInstrumentNode> ScattererInstrumentNodes = [];
     public readonly Dictionary<FModGuid, ParameterNode> ParameterNodes = [];
     public readonly Dictionary<FModGuid, ModulatorNode> ModulatorNodes = [];
+    public readonly Dictionary<FModGuid, CurveNode> CurveNodes = [];
     public readonly Dictionary<FModGuid, FModGuid> WaveformInstrumentNodes = [];
     public List<FmodSoundBank> SoundBankData = [];
     public FHashData[] HashData = [];
 
-    public readonly Dictionary<FModGuid, List<FmodSample>> ResolvedEvents = [];
+    public readonly Dictionary<FModGuid, List<FmodSample>> ResolvedEvents = []; // temp
 
     public FModReader(BinaryReader Ar)
     {
@@ -91,6 +94,10 @@ public class FModReader
                 {
                     case ENodeId.CHUNKID_FORMATINFO:
                         FormatInfo = new FormatInfo(Ar);
+                        break;
+
+                    case ENodeId.CHUNKID_BANKINFO:
+                        BankInfo = new BankInfoNode(Ar);
                         break;
 
                     case ENodeId.CHUNKID_LIST: // List of sub-chunks
@@ -185,6 +192,13 @@ public class FModReader
                     case ENodeId.CHUNKID_HASHDATA:
                         {
                             HashData = new HashDataNode(Ar).HashData;
+                        }
+                        break;
+
+                    case ENodeId.CHUNKID_CURVE:
+                        {
+                            var node = new CurveNode(Ar);
+                            CurveNodes[node.BaseGuid] = node;
                         }
                         break;
 

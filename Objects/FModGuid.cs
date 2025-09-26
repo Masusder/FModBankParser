@@ -7,12 +7,12 @@ public readonly struct FModGuid
     public readonly ushort Data3;
     public readonly byte[] Data4;
 
-    public FModGuid(BinaryReader reader)
+    public FModGuid(BinaryReader Ar)
     {
-        Data1 = reader.ReadUInt32();
-        Data2 = reader.ReadUInt16();
-        Data3 = reader.ReadUInt16();
-        Data4 = reader.ReadBytes(8);
+        Data1 = Ar.ReadUInt32();
+        Data2 = Ar.ReadUInt16();
+        Data3 = Ar.ReadUInt16();
+        Data4 = Ar.ReadBytes(8);
     }
 
     // For UE FGuid compatibility

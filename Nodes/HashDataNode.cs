@@ -10,6 +10,7 @@ namespace FModUEParser.Nodes;
 public class HashDataNode
 {
     public readonly FHashData[] HashData = [];
+
     public HashDataNode(BinaryReader Ar)
     {
         HashData = FModReader.ReadElemListImp<FHashData>(Ar);
