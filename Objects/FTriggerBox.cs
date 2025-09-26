@@ -1,10 +1,10 @@
 ﻿namespace FModUEParser.Objects;
 
-public struct FTriggerBox
+public readonly struct FTriggerBox
 {
-    public FModGuid Guid;
-    public uint E;       // next 4 bytes (offset 0x10)
-    public uint F;       // next 4 bytes (offset 0x14)
+    public readonly FModGuid Guid;
+    public readonly uint E;       // offset 0x10
+    public readonly uint F;       // offset 0x14
 
     public FTriggerBox(BinaryReader Ar)
     {

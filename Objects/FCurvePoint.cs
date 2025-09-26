@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 
 namespace FModUEParser.Objects;
 
-public struct FCurvePoint
+public readonly struct FCurvePoint
 {
-    public float X;
-    public float Y;
-    public float Shape;
-    public uint Type;
+    public readonly float X;
+    public readonly float Y;
+    public readonly float Shape;
+    public readonly uint Type;
 
     public FCurvePoint(BinaryReader Ar)
     {

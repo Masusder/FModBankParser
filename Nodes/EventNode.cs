@@ -29,7 +29,7 @@ namespace FModUEParser.Nodes
         public readonly uint? Flags;
 
         public readonly FModGuid[]? NonMasterTracks;
-        public readonly FModGuid[]? ParameterIDs;
+        public readonly FModGuid[]? ParameterIds;
         public readonly FModGuid[]? EventTriggeredInstruments;
 
         public readonly float? MinimumDistance;
@@ -60,7 +60,7 @@ namespace FModUEParser.Nodes
             if (FModReader.Version >= 0x61) Flags = Ar.ReadUInt32();
 
             if (FModReader.Version >= 0x6b) NonMasterTracks = FModReader.ReadElemListImp<FModGuid>(Ar);
-            if (FModReader.Version >= 0x76) ParameterIDs = FModReader.ReadElemListImp<FModGuid>(Ar, 16);
+            if (FModReader.Version >= 0x76) ParameterIds = FModReader.ReadElemListImp<FModGuid>(Ar, 16);
             if (FModReader.Version >= 0x83) EventTriggeredInstruments = FModReader.ReadElemListImp<FModGuid>(Ar);
 
             if (FModReader.Version >= 0x89)

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace FModUEParser.Objects;
 
-public struct FRangeFloat
+public readonly struct FRangeFloat
 {
     public readonly float Minimum;
     public readonly float Maximum;

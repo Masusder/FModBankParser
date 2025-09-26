@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 namespace FModUEParser.Objects;
 
-public struct FMappingPoint
+public readonly struct FMappingPoint
 {
-    public float X;
-    public float Y;
+    public readonly float X;
+    public readonly float Y;
 
     public FMappingPoint(BinaryReader Ar)
     {

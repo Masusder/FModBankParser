@@ -27,6 +27,7 @@ public class FModReader
     public readonly Dictionary<FModGuid, CurveNode> CurveNodes = [];
     public readonly Dictionary<FModGuid, PropertyNode> PropertyNodes = [];
     public readonly Dictionary<FModGuid, MappingNode> MappingNodes = [];
+    public readonly Dictionary<FModGuid, ParameterLayoutNode> ParameterLayoutNodes = [];
     public readonly Dictionary<FModGuid, FModGuid> WaveformInstrumentNodes = [];
     public List<FmodSoundBank> SoundBankData = [];
     public FHashData[] HashData = [];
@@ -142,6 +143,13 @@ public class FModReader
                         {
                             var node = new ParameterNode(Ar);
                             ParameterNodes[node.BaseGuid] = node;
+                        }
+                        break;
+
+                    case ENodeId.CHUNKID_PARAMETERLAYOUTBODY: // Parameter Layout Node
+                        {
+                            var node = new ParameterLayoutNode(Ar);
+                            ParameterLayoutNodes[node.BaseGuid] = node;
                         }
                         break;
 

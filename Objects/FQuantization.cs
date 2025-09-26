@@ -1,9 +1,9 @@
 ﻿namespace FModUEParser.Objects;
 
-public struct FQuantization
+public readonly struct FQuantization
 {
-    public readonly EQuantizationUnit Unit { get; }
-    public readonly int Multiplier { get; }
+    public readonly EQuantizationUnit Unit;
+    public readonly int Multiplier;
 
     public FQuantization(BinaryReader Ar)
     {

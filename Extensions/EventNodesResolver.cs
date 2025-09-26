@@ -35,8 +35,28 @@ public static class EventNodesResolver
         }
 
         if (evNode.ParameterLayouts != null)
+        {
             foreach (var param in evNode.ParameterLayouts)
                 stack.Push(param);
+
+            foreach (var paramGuid in evNode.ParameterLayouts)
+            {
+                if (reader.ParameterLayoutNodes != null && reader.ParameterLayoutNodes.TryGetValue(paramGuid, out var paramLayoutNode))
+                {
+                    if (paramLayoutNode.Instruments != null)
+                        foreach (var instGuid in paramLayoutNode.Instruments)
+                            stack.Push(instGuid);
+
+                    if (paramLayoutNode.Controllers != null)
+                        foreach (var controllerGuid in paramLayoutNode.Controllers)
+                            stack.Push(controllerGuid);
+
+                    if (paramLayoutNode.TriggerBoxes != null)
+                        foreach (var triggerBoxGuid in paramLayoutNode.TriggerBoxes)
+                            stack.Push(triggerBoxGuid);
+                }
+            }
+        }
 
         if (evNode.EventTriggeredInstruments != null)
             foreach (var inst in evNode.EventTriggeredInstruments)

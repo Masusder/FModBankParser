@@ -1,6 +1,6 @@
 ﻿namespace FModUEParser.Objects;
 
-public struct FHashData
+public readonly struct FHashData
 {
     public readonly FModGuid Guid;
     public readonly uint Hash;
