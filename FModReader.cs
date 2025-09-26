@@ -25,6 +25,8 @@ public class FModReader
     public readonly Dictionary<FModGuid, ParameterNode> ParameterNodes = [];
     public readonly Dictionary<FModGuid, ModulatorNode> ModulatorNodes = [];
     public readonly Dictionary<FModGuid, CurveNode> CurveNodes = [];
+    public readonly Dictionary<FModGuid, PropertyNode> PropertyNodes = [];
+    public readonly Dictionary<FModGuid, MappingNode> MappingNodes = [];
     public readonly Dictionary<FModGuid, FModGuid> WaveformInstrumentNodes = [];
     public List<FmodSoundBank> SoundBankData = [];
     public FHashData[] HashData = [];
@@ -109,6 +111,13 @@ public class FModReader
                         var listCount = Ar.ReadUInt32();
                         break;
 
+                    case ENodeId.CHUNKID_PROPERTY: // Property Node
+                        {
+                            var node = new PropertyNode(Ar);
+                            PropertyNodes[node.MappingGuid] = node;
+                        }
+                        break;
+
                     case ENodeId.CHUNKID_EVENTBODY: // Audio Event Node
                         {
                             var node = new EventNode(Ar);
@@ -189,16 +198,23 @@ public class FModReader
                         }
                         break;
 
-                    case ENodeId.CHUNKID_HASHDATA:
+                    case ENodeId.CHUNKID_HASHDATA: // Hash Node
                         {
                             HashData = new HashDataNode(Ar).HashData;
                         }
                         break;
 
-                    case ENodeId.CHUNKID_CURVE:
+                    case ENodeId.CHUNKID_CURVE: // Curve Node
                         {
                             var node = new CurveNode(Ar);
                             CurveNodes[node.BaseGuid] = node;
+                        }
+                        break;
+
+                    case ENodeId.CHUNKID_MAPPING: // Mapping Node
+                        {
+                            var node = new MappingNode(Ar);
+                            MappingNodes[node.BaseGuid] = node;
                         }
                         break;
 
