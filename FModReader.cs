@@ -14,6 +14,7 @@ public class FModReader
     private const int EndOfList = 0x53494C00; // "\0LIS"
 
     public BankInfoNode? BankInfo;
+    public static SoundDataHeaderNode? SoundDataHeader;
     public static FormatInfo FormatInfo { get; private set; } = null!;
     public static int Version => FormatInfo.FileVersion;
     public readonly Dictionary<FModGuid, EventNode> EventNodes = [];
@@ -28,6 +29,7 @@ public class FModReader
     public readonly Dictionary<FModGuid, PropertyNode> PropertyNodes = [];
     public readonly Dictionary<FModGuid, MappingNode> MappingNodes = [];
     public readonly Dictionary<FModGuid, ParameterLayoutNode> ParameterLayoutNodes = [];
+    public readonly Dictionary<FModGuid, ControllerNode> ControllerNodes = [];
     public readonly Dictionary<FModGuid, FModGuid> WaveformInstrumentNodes = [];
     public List<FmodSoundBank> SoundBankData = [];
     public FHashData[] HashData = [];
@@ -67,6 +69,7 @@ public class FModReader
 
         FModGuid? currentMuitGuid = null;
         bool visitedSoundNode = false;
+        int soundDataIndex = 0;
 
         while (Ar.BaseStream.Position + 8 <= end)
         {
@@ -178,7 +181,7 @@ public class FModReader
                     case ENodeId.CHUNKID_INSTRUMENT: // Instrument Node
                         {
                             var node = new InstrumentNode(Ar);
-                            InstrumentNodes[node.BaseGuid] = node;
+                            InstrumentNodes[node.TimelineGuid] = node;
                         }
                         break;
 
@@ -216,6 +219,13 @@ public class FModReader
                         }
                         break;
 
+                    case ENodeId.CHUNKID_CONTROLLER: // Controller Node
+                        {
+                            var node = new ControllerNode(Ar);
+                            ControllerNodes[node.BaseGuid] = node; 
+                        }
+                        break;
+
                     case ENodeId.CHUNKID_MAPPING: // Mapping Node
                         {
                             var node = new MappingNode(Ar);
@@ -223,10 +233,17 @@ public class FModReader
                         }
                         break;
 
+                    case ENodeId.CHUNKID_SOUNDDATAHEADER: // Sound Data Header Node
+                        {
+                            SoundDataHeader = new SoundDataHeaderNode(Ar);
+                        }
+                        break;
+
                     case ENodeId.CHUNKID_SOUNDDATA: // Sound Data Node
                         {
-                            var node = new SoundDataNode(Ar, nodeSize);
+                            var node = new SoundDataNode(Ar, nodeStart, nodeSize, soundDataIndex);
                             visitedSoundNode = true;
+                            soundDataIndex++;
                             if (node.SoundBank != null)
                             {
                                 SoundBankData.Add(node.SoundBank);
