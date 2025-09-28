@@ -9,8 +9,8 @@ namespace FModUEParser.Nodes.ModulatorSubnodes;
 public class RandomModulatorNode
 {
     public readonly float Minimum;
-    public float Maximum;
-    public float Amount;
+    public readonly float Maximum;
+    public readonly float Amount;
 
     public RandomModulatorNode(BinaryReader Ar)
     {

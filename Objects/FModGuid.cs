@@ -15,6 +15,24 @@ public readonly struct FModGuid
         Data4 = Ar.ReadBytes(8);
     }
 
+    public FModGuid(Guid guid)
+    {
+        var bytes = guid.ToByteArray();
+        Data1 = BitConverter.ToUInt32(bytes, 0);
+        Data2 = BitConverter.ToUInt16(bytes, 4);
+        Data3 = BitConverter.ToUInt16(bytes, 6);
+        Data4 = new byte[8];
+        Buffer.BlockCopy(bytes, 8, Data4, 0, 8);
+    }
+
+    public FModGuid(string text)
+    {
+        if (!TryParseInternal(text, out var g))
+            throw new FormatException($"Invalid FMOD GUID string: '{text}'");
+
+        this = new FModGuid(g);
+    }
+
     // For UE FGuid compatibility
     //public FModGuid(FGuid fguid)
     //{
@@ -33,6 +51,12 @@ public readonly struct FModGuid
     //            (byte)(fguid.D)
     //    ];
     //}
+
+    public bool IsEmpty =>
+        Data1 == 0 &&
+        Data2 == 0 &&
+        Data3 == 0 &&
+        (Data4 == null || Data4.All(b => b == 0));
 
     public bool Equals(FModGuid other)
     {
@@ -66,5 +90,42 @@ public readonly struct FModGuid
     public static bool operator !=(FModGuid left, FModGuid right)
     {
         return !(left == right);
+    }
+
+    private static bool TryParseInternal(string? text, out Guid guid)
+    {
+        guid = Guid.Empty;
+        if (string.IsNullOrWhiteSpace(text))
+            return false;
+
+        text = text.Trim();
+
+        if (text.Length >= 2 && text[0] == '{' && text[^1] == '}')
+            text = text[1..^1];
+
+        if (Guid.TryParse(text, out guid))
+            return true;
+
+        if (text.Length == 32)
+        {
+            try
+            {
+                string dashed =
+                    text[..8] + "-" +
+                    text[8..12] + "-" +
+                    text[12..16] + "-" +
+                    text[16..20] + "-" +
+                    text[20..32];
+
+                if (Guid.TryParse(dashed, out guid))
+                    return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        return false;
     }
 }

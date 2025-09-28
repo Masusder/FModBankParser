@@ -9,16 +9,15 @@ namespace FModUEParser.Nodes.ModulatorSubnodes;
 
 public class EnvelopeModulatorNode
 {
-    public float Amount { get; }
-    public float ThresholdMinimum { get; }
-    public float ThresholdMaximum { get; }
-    public float? AttackTime { get; }
-    public float? ReleaseTime { get; }
-    public bool? UseRMS { get; }
-
-    public float? Minimum { get; }
-    public float? Maximum { get; }
-    public FModGuid? EffectId { get; }
+    public readonly float Amount;
+    public readonly float ThresholdMinimum;
+    public readonly float ThresholdMaximum;
+    public readonly float? AttackTime;
+    public readonly float? ReleaseTime;
+    public readonly bool? UseRMS;
+    public readonly float? Minimum;
+    public readonly float? Maximum;
+    public readonly FModGuid? EffectId;
 
     public EnvelopeModulatorNode(BinaryReader Ar)
     {

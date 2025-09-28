@@ -66,6 +66,7 @@ public static class FModBankMerger
         foreach (var kv in src.MappingNodes) dest.MappingNodes[kv.Key] = kv.Value;
         foreach (var kv in src.ParameterLayoutNodes) dest.ParameterLayoutNodes[kv.Key] = kv.Value;
         foreach (var kv in src.WaveformInstrumentNodes) dest.WaveformInstrumentNodes[kv.Key] = kv.Value;
+        foreach (var kv in src.ControllerNodes) dest.ControllerNodes[kv.Key] = kv.Value;
 
         dest.SoundBankData.AddRange(src.SoundBankData);
     }

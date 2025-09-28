@@ -11,10 +11,9 @@ namespace FModUEParser;
 
 public class FModReader
 {
-    private const int EndOfList = 0x53494C00; // "\0LIS"
-
     public BankInfoNode? BankInfo;
     public static SoundDataHeaderNode? SoundDataHeader;
+    public StringDataNode? StringData;
     public static FormatInfo FormatInfo { get; private set; } = null!;
     public static int Version => FormatInfo.FileVersion;
     public readonly Dictionary<FModGuid, EventNode> EventNodes = [];
@@ -76,8 +75,9 @@ public class FModReader
             long nodeStart = Ar.BaseStream.Position;
             var rawNodeValue = Ar.ReadInt32();
 
-            // Shift \0LIS to LIST
-            if (rawNodeValue == EndOfList)
+            // Shift to correct position if end of the node starts with null terminator
+            // (usually it's end of a list but not always)
+            if ((rawNodeValue & 0xFF) == 0x00)
             {
                 nodeStart = Ar.BaseStream.Position - 3;
                 Ar.BaseStream.Position -= 3;
@@ -135,7 +135,7 @@ public class FModReader
 
                     case ENodeId.CHUNKID_STRINGDATA: // String Data Node
                         {
-                            var node = new StringDataNode(Ar);
+                            StringData = new StringDataNode(Ar);
                         }
                         break;
 
@@ -325,6 +325,9 @@ public class FModReader
             if (hasSizePrefix && size != null && elementSize != size)
             {
                 Ar.BaseStream.Position += elementSize;
+#if DEBUG
+                Console.WriteLine($"Warning: '{typeof(T).Name}' element size {elementSize} does not match expected {size}, skipping");
+#endif
             }
             else
             {
