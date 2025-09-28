@@ -3,29 +3,28 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace FModUEParser.Nodes
+namespace FModUEParser.Nodes;
+
+public class TimelineNode
 {
-    public class TimelineNode
+    public readonly FModGuid BaseGuid;
+    public readonly FTriggerBox[] TriggerBoxes = [];
+    public readonly FTriggerBox[] TimeLockedTriggerBoxes = [];
+    //public uint[] LegacyUIntArray { get; } = [];
+
+    public TimelineNode(BinaryReader Ar)
     {
-        public readonly FModGuid BaseGuid;
-        public readonly FTriggerBox[] TriggerBoxes = [];
-        public readonly FTriggerBox[] TimeLockedTriggerBoxes = [];
-        //public uint[] LegacyUIntArray { get; } = [];
+        BaseGuid = new FModGuid(Ar);
 
-        public TimelineNode(BinaryReader Ar)
+        if (FModReader.Version >= 0x6d)
         {
-            BaseGuid = new FModGuid(Ar);
+            TriggerBoxes = FModReader.ReadElemListImp<FTriggerBox>(Ar);
+            TimeLockedTriggerBoxes = FModReader.ReadElemListImp<FTriggerBox>(Ar);
+        }
 
-            if (FModReader.Version >= 0x6d)
-            {
-                TriggerBoxes = FModReader.ReadElemListImp<FTriggerBox>(Ar);
-                TimeLockedTriggerBoxes = FModReader.ReadElemListImp<FTriggerBox>(Ar);
-            }
-
-            if (FModReader.Version < 0x84)
-            {
-                // LegacyUIntArray, I don't care
-            }
+        if (FModReader.Version < 0x84)
+        {
+            // LegacyUIntArray, I don't care
         }
     }
 }

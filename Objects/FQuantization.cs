@@ -1,4 +1,6 @@
-﻿namespace FModUEParser.Objects;
+﻿using FModUEParser.Enums;
+
+namespace FModUEParser.Objects;
 
 public readonly struct FQuantization
 {

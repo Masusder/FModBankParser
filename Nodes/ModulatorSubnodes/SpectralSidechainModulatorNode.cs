@@ -1,4 +1,5 @@
-﻿using FModUEParser.Objects;
+﻿using FModUEParser.Enums;
+using FModUEParser.Objects;
 using System;
 using System.Collections.Generic;
 using System.Linq;

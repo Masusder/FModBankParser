@@ -1,4 +1,5 @@
-﻿using FModUEParser.Nodes.ModulatorSubnodes;
+﻿using FModUEParser.Enums;
+using FModUEParser.Nodes.ModulatorSubnodes;
 using FModUEParser.Objects;
 using System;
 using System.Collections.Generic;

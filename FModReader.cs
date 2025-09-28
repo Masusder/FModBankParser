@@ -1,6 +1,7 @@
 ﻿using Fmod5Sharp.FmodTypes;
 using FModUEParser.Nodes;
 using FModUEParser.Objects;
+using FModUEParser.Enums;
 using FModUEParser.Extensions;
 using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
@@ -11,11 +12,12 @@ namespace FModUEParser;
 
 public class FModReader
 {
-    public BankInfoNode? BankInfo;
+    public static int Version => FormatInfo.FileVersion;
+    public static FormatInfo FormatInfo { get; private set; } = null!;
     public static SoundDataHeaderNode? SoundDataHeader;
     public StringDataNode? StringData;
-    public static FormatInfo FormatInfo { get; private set; } = null!;
-    public static int Version => FormatInfo.FileVersion;
+    public BankInfoNode? BankInfo;
+
     public readonly Dictionary<FModGuid, EventNode> EventNodes = [];
     public readonly Dictionary<FModGuid, TimelineNode> TimelineNodes = [];
     public readonly Dictionary<FModGuid, PlaylistNode> PlaylistNodes = [];
@@ -30,6 +32,7 @@ public class FModReader
     public readonly Dictionary<FModGuid, ParameterLayoutNode> ParameterLayoutNodes = [];
     public readonly Dictionary<FModGuid, ControllerNode> ControllerNodes = [];
     public readonly Dictionary<FModGuid, FModGuid> WaveformInstrumentNodes = [];
+
     public List<FmodSoundBank> SoundBankData = [];
     public FHashData[] HashData = [];
 
@@ -66,7 +69,7 @@ public class FModReader
     {
         Ar.BaseStream.Position = start;
 
-        FModGuid? currentMuitGuid = null;
+        FModGuid? playlistParentGuid = null;
         bool visitedSoundNode = false;
         int soundDataIndex = 0;
 
@@ -163,12 +166,13 @@ public class FModReader
                     case ENodeId.CHUNKID_SCATTERERINSTRUMENTBODY: // Scatterer Instrument Node
                         {
                             var node = new ScattererInstrumentNode(Ar);
+                            playlistParentGuid = node.BaseGuid; // Also points to playlist which always comes as a next node
                             ScattererInstrumentNodes[node.BaseGuid] = node;
                         }
                         break;
 
                     case ENodeId.CHUNKID_MULTIINSTRUMENTBODY: // Multi Instrument Node
-                        currentMuitGuid = new FModGuid(Ar); // Multi simply points to playlist which always comes as a next node
+                        playlistParentGuid = new FModGuid(Ar); // Multi simply points to playlist which always comes as a next node
                         break;
 
                     case ENodeId.CHUNKID_WAVEFORMINSTRUMENTBODY: // Waveform Instrument Node
@@ -193,10 +197,10 @@ public class FModReader
                         break;
 
                     case ENodeId.CHUNKID_PLAYLIST: // Playlist Node
-                        if (currentMuitGuid != null)
+                        if (playlistParentGuid != null)
                         {
-                            PlaylistNodes[currentMuitGuid.Value] = new PlaylistNode(Ar);
-                            currentMuitGuid = null;
+                            PlaylistNodes[playlistParentGuid.Value] = new PlaylistNode(Ar);
+                            playlistParentGuid = null;
                         }
                         break;
 

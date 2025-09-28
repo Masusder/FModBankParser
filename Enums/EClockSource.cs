@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FModUEParser.Objects;
+namespace FModUEParser.Enums;
 
 public enum EClockSource : uint
 {

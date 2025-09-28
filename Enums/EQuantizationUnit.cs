@@ -1,4 +1,4 @@
-﻿namespace FModUEParser.Objects;
+﻿namespace FModUEParser.Enums;
 
 public enum EQuantizationUnit : uint
 {

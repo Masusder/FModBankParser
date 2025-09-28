@@ -1,4 +1,5 @@
-﻿using FModUEParser.Objects;
+﻿using FModUEParser.Enums;
+using FModUEParser.Objects;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,29 +18,6 @@ public class PlaylistNode
     {
         PlayMode = (EPlaylistPlayMode)Ar.ReadInt32();
         SelectionMode = (EPlaylistSelectionMode)Ar.ReadInt32();
-
-        uint packedSize = Ar.ReadUInt32();
-        ushort unpackedSize = (ushort)(packedSize & 0xFFFF);
-        int numEntries = (unpackedSize - 1) / 2;
-
-        Entries = new FPlaylistEntry[numEntries];
-        for (int i = 0; i < numEntries; i++)
-        {
-            var guid = new FModGuid(Ar);
-            var weight = Ar.ReadSingle();
-            Entries[i] = new FPlaylistEntry(guid, weight);
-        }
-    }
-}
-
-public readonly struct FPlaylistEntry
-{
-    public FModGuid Guid { get; }
-    public float Weight { get; }
-
-    public FPlaylistEntry(FModGuid guid, float weight)
-    {
-        Guid = guid;
-        Weight = weight;
+        Entries = FModReader.ReadElemListImp<FPlaylistEntry>(Ar);
     }
 }
