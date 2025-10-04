@@ -1,8 +1,7 @@
 ﻿using Fmod5Sharp.FmodTypes;
+using FModUEParser.Enums;
 using FModUEParser.Nodes;
 using FModUEParser.Objects;
-using FModUEParser.Enums;
-using FModUEParser.Extensions;
 using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -327,7 +326,28 @@ public class FModReader
         return Encoding.UTF8.GetString(bytes);
     }
 
-    public static T[] ReadElemListImp<T>(BinaryReader Ar, int? size = null)
+    public static T[] ReadVersionedElemListImp<T>(BinaryReader Ar)
+    {
+        uint raw = ReadX16(Ar);
+        int count = (int)(raw >> 1);
+
+        if (count <= 0) return [];
+
+        var result = new T[count];
+
+        ushort elementSize = Ar.ReadUInt16();
+
+        for (int i = 0; i < count; i++)
+        {
+            result[i] = (T)Activator.CreateInstance(typeof(T), Ar)!;
+
+            if (i < count - 1) elementSize = Ar.ReadUInt16();
+        }
+
+        return result;
+    }
+
+    public static T[] ReadElemListImp<T>(BinaryReader Ar, int? size = null, bool readPayloadInLoop = false)
     {
 
         uint raw = ReadX16(Ar);
@@ -347,6 +367,7 @@ public class FModReader
         for (int i = 0; i < count; i++)
         {
             // I don't know what do in case where the element size is different than expected so I'll just skip it
+            // (probably we're just reading it wrong and this should actually throw)
             if (hasSizePrefix && size != null && elementSize != size)
             {
                 Ar.BaseStream.Position += elementSize;
