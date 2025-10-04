@@ -1,4 +1,4 @@
-﻿namespace FModUEParser.Nodes;
+﻿namespace FModUEParser.Objects;
 
 public readonly struct FTriggerDelay
 {

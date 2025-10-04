@@ -11,7 +11,7 @@ public static class FModBankMerger
     // Events and samples can be divided between streams/assets/bank
     public static List<FModReader> MergeBanks(string folderPath)
     {
-        var files = Directory.GetFiles(folderPath, "*.bank", SearchOption.TopDirectoryOnly);
+        var files = Directory.GetFiles(folderPath, "*.bank", SearchOption.AllDirectories);
         var baseNames = files
             .Select(f => Path.GetFileName(f)
                 .Replace(".streams.bank", "")

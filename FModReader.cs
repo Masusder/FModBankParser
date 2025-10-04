@@ -20,6 +20,8 @@ public class FModReader
 
     public readonly Dictionary<FModGuid, EventNode> EventNodes = [];
     public readonly Dictionary<FModGuid, TimelineNode> TimelineNodes = [];
+    public readonly Dictionary<FModGuid, TransitionRegionNode> TransitionRegionNodes = [];
+    public readonly Dictionary<FModGuid, TransitionTimelineNode> TransitionTimelineNodes = [];
     public readonly Dictionary<FModGuid, PlaylistNode> PlaylistNodes = [];
     public readonly Dictionary<FModGuid, InstrumentNode> InstrumentNodes = [];
     public readonly Dictionary<FModGuid, WaveformResourceNode> WavEntries = [];
@@ -70,6 +72,8 @@ public class FModReader
         Ar.BaseStream.Position = start;
 
         FModGuid? playlistParentGuid = null;
+        FModGuid? transitionParentGuid = null;
+
         bool visitedSoundNode = false;
         int soundDataIndex = 0;
 
@@ -193,6 +197,23 @@ public class FModReader
                         {
                             var node = new TimelineNode(Ar);
                             TimelineNodes[node.BaseGuid] = node;
+                        }
+                        break;
+
+                    case ENodeId.CHUNKID_TRANSITIONREGIONBODY: // Transition Region Node
+                        {
+                            var node = new TransitionRegionNode(Ar);
+                            TransitionRegionNodes[node.BaseGuid] = node;
+                            transitionParentGuid = node.BaseGuid;
+                        }
+                        break;
+
+                    case ENodeId.CHUNKID_TRANSITIONTIMELINE: // Transition Timeline Node
+                        if (transitionParentGuid != null)
+                        {
+                            var node = new TransitionTimelineNode(Ar);
+                            TransitionTimelineNodes[transitionParentGuid.Value] = node;
+                            transitionParentGuid = null;
                         }
                         break;
 
