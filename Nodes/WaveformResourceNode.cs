@@ -18,7 +18,7 @@ public class WaveformResourceNode
     public WaveformResourceNode(BinaryReader Ar)
     {
         BaseGuid = new FModGuid(Ar);
-        Ar.ReadBytes(2); // Unknown bytes
+        Ar.ReadUInt16(); // It's payload size after guid
         SubsoundIndex = Ar.ReadInt32();
         SoundBankIndex = Ar.ReadInt32();
         if (FModReader.Version >= 0x46)
