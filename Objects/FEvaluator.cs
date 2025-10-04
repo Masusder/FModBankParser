@@ -44,4 +44,24 @@ public readonly struct FEvaluator
                 break;
         }
     }
+
+    #region Readers
+    public static List<FEvaluator> ReadEvaluatorList(BinaryReader Ar)
+    {
+        var evaluators = new List<FEvaluator>();
+
+        var totalSize = Ar.ReadInt32();
+        if (totalSize <= 0) return [];
+
+        var startPos = Ar.BaseStream.Position;
+        var endPos = startPos + totalSize;
+        while (Ar.BaseStream.Position < endPos)
+        {
+            evaluators.Add(new FEvaluator(Ar));
+        }
+
+        return evaluators;
+    }
+
+    #endregion
 }

@@ -22,11 +22,12 @@ public class InstrumentNode
     public readonly float AutoPitchReference;
     public readonly float InitialSeekPosition;
     public readonly int MaximumPolyphony;
-    //public readonly int PolyphonyLimitBehavior;
-    //public readonly uint LeftTrimOffset;
-    //public readonly float InitialSeekPercent;
-    //public readonly float AutoPitchAtMinimum;
-    //public readonly FEvaluatorList Evaluators;
+    public readonly FRoutable Routable;
+    public readonly int PolyphonyLimitBehavior;
+    public readonly uint LeftTrimOffset;
+    public readonly float InitialSeekPercent;
+    public readonly float AutoPitchAtMinimum;
+    public readonly List<FEvaluator> Evaluators = [];
 
     public InstrumentNode(BinaryReader Ar)
     {
@@ -53,31 +54,32 @@ public class InstrumentNode
         InitialSeekPosition = Ar.ReadSingle();
         MaximumPolyphony = Ar.ReadInt32();
 
-        // TODO: more to read
+        var routablePayloadSize = Ar.ReadUInt16();
+        Routable = new FRoutable(Ar);
 
-        //if (FModReader.Version >= 0x35)
-        //{
-        //    PolyphonyLimitBehavior = Ar.ReadInt32();
-        //}
+        if (FModReader.Version >= 0x35)
+        {
+            PolyphonyLimitBehavior = Ar.ReadInt32();
+        }
 
-        //if (FModReader.Version >= 0x47)
-        //{
-        //    LeftTrimOffset = Ar.ReadUInt32();
-        //}
+        if (FModReader.Version >= 0x47)
+        {
+            LeftTrimOffset = Ar.ReadUInt32();
+        }
 
-        //if (FModReader.Version >= 0x48)
-        //{
-        //    InitialSeekPercent = Ar.ReadSingle();
-        //}
+        if (FModReader.Version >= 0x48)
+        {
+            InitialSeekPercent = Ar.ReadSingle();
+        }
 
-        //if (FModReader.Version >= 0x50)
-        //{
-        //    AutoPitchAtMinimum = Ar.ReadSingle();
-        //}
+        if (FModReader.Version >= 0x50)
+        {
+            AutoPitchAtMinimum = Ar.ReadSingle();
+        }
 
-        //if (FModReader.Version >= 0x82)
-        //{
-        //    Evaluators = new FEvaluatorList(Ar);
-        //}
+        if (FModReader.Version >= 0x82)
+        {
+            Evaluators = FEvaluator.ReadEvaluatorList(Ar);
+        }
     }
 }

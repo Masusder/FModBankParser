@@ -18,6 +18,7 @@ public class FModReader
     public BankInfoNode? BankInfo;
 
     public readonly Dictionary<FModGuid, EventNode> EventNodes = [];
+    public readonly Dictionary<FModGuid, CommandInstrumentNode> CommandInstrumentNodes = [];
     public readonly Dictionary<FModGuid, TimelineNode> TimelineNodes = [];
     public readonly Dictionary<FModGuid, TransitionRegionNode> TransitionRegionNodes = [];
     public readonly Dictionary<FModGuid, TransitionTimelineNode> TransitionTimelineNodes = [];
@@ -163,6 +164,13 @@ public class FModReader
                         {
                             var node = new WaveformResourceNode(Ar);
                             WavEntries[node.BaseGuid] = node;
+                        }
+                        break;
+
+                    case ENodeId.CHUNKID_COMMANDINSTRUMENTBODY: // Command Instrument Node
+                        {
+                            var node = new CommandInstrumentNode(Ar);
+                            CommandInstrumentNodes[node.BaseGuid] = node;
                         }
                         break;
 
