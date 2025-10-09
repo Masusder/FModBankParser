@@ -2,6 +2,7 @@
 using FModUEParser.Enums;
 using FModUEParser.Nodes;
 using FModUEParser.Nodes.Buses;
+using FModUEParser.Nodes.Effects;
 using FModUEParser.Objects;
 using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
@@ -13,12 +14,14 @@ namespace FModUEParser;
 public class FModReader
 {
     public static int Version => FormatInfo.FileVersion;
-    public static FormatInfo FormatInfo { get; private set; } = null!;
+    public static FormatInfo FormatInfo = null!;
     public static SoundDataHeaderNode? SoundDataHeader;
     public StringDataNode? StringData;
     public BankInfoNode? BankInfo;
 
     public readonly Dictionary<FModGuid, EventNode> EventNodes = [];
+    public readonly Dictionary<FModGuid, BusNode> BusNodes = [];
+    public readonly Dictionary<FModGuid, EffectNode> EffectNodes = [];
     public readonly Dictionary<FModGuid, CommandInstrumentNode> CommandInstrumentNodes = [];
     public readonly Dictionary<FModGuid, TimelineNode> TimelineNodes = [];
     public readonly Dictionary<FModGuid, TransitionRegionNode> TransitionRegionNodes = [];
@@ -150,7 +153,53 @@ public class FModReader
                         busParent.NodeId == ENodeId.CHUNKID_MASTERBUSBODY))
                     {
                         var node = new BusNode(Ar);
+                        BusNodes[busParent.Guid] = node;
                         parentStack.Pop();
+                    }
+                    break;
+
+                case ENodeId.CHUNKID_BUILTINEFFECTBODY: // Built-in Effect Node
+                    {
+                        var node = new BuiltInEffectNode(Ar);
+                        parentStack.Push(new FParentContext(nodeId, node.BaseGuid)); // Points to parameterized effect node
+                    }
+                    break;
+
+                case ENodeId.CHUNKID_SENDEFFECTBODY: // Send Effect Node
+                    {
+                        var node = new SendEffectNode(Ar);
+
+                        parentStack.Push(new FParentContext(nodeId, node.BaseGuid)); // Points to effect node
+                    }
+                    break;
+
+                case ENodeId.CHUNKID_SIDECHAINEFFECT: // Side Chain Effect Node
+                    {
+                        var node = new SideChainEffectNode(Ar);
+
+                        parentStack.Push(new FParentContext(nodeId, node.BaseGuid)); // Points to effect node
+                    }
+                    break;
+
+                case ENodeId.CHUNKID_PARAMETERIZEDEFFECT: // Parameterized Effect Node
+                    if (parentStack.TryPeek(out var paramEffectParent) &&
+                        paramEffectParent.NodeId == ENodeId.CHUNKID_BUILTINEFFECTBODY)
+                    {
+                        var node = new ParameterizedEffectNode(Ar);
+                        parentStack.Pop();
+
+                        parentStack.Push(new FParentContext(nodeId, paramEffectParent.Guid)); // Points to effect node
+                    }
+                    break;
+
+                case ENodeId.CHUNKID_EFFECTBODY: // Effect Node
+                    if (parentStack.TryPeek(out var effectParent) &&
+                        (effectParent.NodeId == ENodeId.CHUNKID_PARAMETERIZEDEFFECT ||
+                        effectParent.NodeId == ENodeId.CHUNKID_SENDEFFECTBODY ||
+                        effectParent.NodeId == ENodeId.CHUNKID_SIDECHAINEFFECT))
+                    {
+                        var node = new EffectNode(Ar);
+                        EffectNodes[effectParent.Guid] = node;
                     }
                     break;
 
@@ -269,12 +318,6 @@ public class FModReader
                     {
                         PlaylistNodes[parent.Guid] = new PlaylistNode(Ar);
                         parentStack.Pop();
-                    }
-                    break;
-
-                case ENodeId.CHUNKID_BUILTINEFFECTBODY: // Built-in Effect Node
-                    {
-
                     }
                     break;
 

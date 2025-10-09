@@ -14,15 +14,7 @@ public class BaseBusNode
 
     public BaseBusNode(BinaryReader Ar)
     {
-        var includeRoutable = false;
         BaseGuid = new FModGuid(Ar);
-
-        if (includeRoutable)
-        {
-            // TODO
-            return;
-        }
-
         Ar.ReadUInt16(); // Payload size
         Routable = new FRoutable(Ar);
     }
