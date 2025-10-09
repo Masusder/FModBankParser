@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FModUEParser.Nodes;
+namespace FModUEParser.Nodes.Instruments;
 
 public class CommandInstrumentNode
 {

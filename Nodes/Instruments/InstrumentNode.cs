@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FModUEParser.Nodes;
+namespace FModUEParser.Nodes.Instruments;
 
 public class InstrumentNode
 {
@@ -53,8 +53,6 @@ public class InstrumentNode
         AutoPitchReference = Ar.ReadSingle();
         InitialSeekPosition = Ar.ReadSingle();
         MaximumPolyphony = Ar.ReadInt32();
-
-        var routablePayloadSize = Ar.ReadUInt16();
         Routable = new FRoutable(Ar);
 
         if (FModReader.Version >= 0x35)

@@ -5,16 +5,16 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FModUEParser.Nodes;
+namespace FModUEParser.Nodes.Instruments;
 
-public class WaveformInstrumentNode
+public class SilenceInstrumentNode
 {
     public readonly FModGuid BaseGuid;
-    public readonly FModGuid WaveformResourceGuid;
+    public readonly float Duration;
 
-    public WaveformInstrumentNode(BinaryReader Ar)
+    public SilenceInstrumentNode(BinaryReader Ar)
     {
         BaseGuid = new FModGuid(Ar);
-        WaveformResourceGuid = new FModGuid(Ar);
+        Duration = Ar.ReadSingle();
     }
 }

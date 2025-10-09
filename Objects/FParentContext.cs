@@ -7,10 +7,10 @@ using System.Threading.Tasks;
 
 namespace FModUEParser.Objects;
 
-public class FParentContext
+public readonly struct FParentContext
 {
-    public ENodeId NodeId { get; }
-    public FModGuid Guid { get; }
+    public readonly ENodeId NodeId;
+    public readonly FModGuid Guid;
 
     public FParentContext(ENodeId nodeId, FModGuid guid)
     {

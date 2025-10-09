@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace FModUEParser.Objects;
 
-public class FMixerStrip
+public readonly struct FMixerStrip
 {
     public readonly float Volume;
     public readonly float Pitch;

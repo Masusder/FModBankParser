@@ -3,6 +3,7 @@ using FModUEParser.Enums;
 using FModUEParser.Nodes;
 using FModUEParser.Nodes.Buses;
 using FModUEParser.Nodes.Effects;
+using FModUEParser.Nodes.Instruments;
 using FModUEParser.Objects;
 using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
@@ -251,13 +252,6 @@ public class FModReader
                     }
                     break;
 
-                case ENodeId.CHUNKID_COMMANDINSTRUMENTBODY: // Command Instrument Node
-                    {
-                        var node = new CommandInstrumentNode(Ar);
-                        CommandInstrumentNodes[node.BaseGuid] = node;
-                    }
-                    break;
-
                 case ENodeId.CHUNKID_SCATTERERINSTRUMENTBODY: // Scatterer Instrument Node
                     {
                         var node = new ScattererInstrumentNode(Ar);
@@ -271,10 +265,47 @@ public class FModReader
                     parentStack.Push(new FParentContext(nodeId, new FModGuid(Ar))); // Points to playlist node
                     break;
 
+                case ENodeId.CHUNKID_PLAYLIST: // Playlist Node
+                    if (parentStack.TryPeek(out var parent) &&
+                        (parent.NodeId == ENodeId.CHUNKID_SCATTERERINSTRUMENTBODY ||
+                         parent.NodeId == ENodeId.CHUNKID_MULTIINSTRUMENTBODY))
+                    {
+                        PlaylistNodes[parent.Guid] = new PlaylistNode(Ar);
+                        parentStack.Pop();
+                    }
+                    break;
+
+                case ENodeId.CHUNKID_COMMANDINSTRUMENTBODY: // Command Instrument Node
+                    {
+                        var node = new CommandInstrumentNode(Ar);
+                        CommandInstrumentNodes[node.BaseGuid] = node;
+
+                        parentStack.Push(new FParentContext(nodeId, node.BaseGuid)); // Points to instrument node
+                    }
+                    break;
+
                 case ENodeId.CHUNKID_WAVEFORMINSTRUMENTBODY: // Waveform Instrument Node
                     {
                         var node = new WaveformInstrumentNode(Ar);
                         WaveformInstrumentNodes[node.BaseGuid] = node.WaveformResourceGuid;
+
+                        parentStack.Push(new FParentContext(nodeId, node.BaseGuid)); // Points to instrument node
+                    }
+                    break;
+
+                case ENodeId.CHUNKID_EVENTINSTRUMENTBODY: // Event Instrument Node
+                    {
+                        var node = new EventInstrumentNode(Ar);
+
+                        parentStack.Push(new FParentContext(nodeId, node.BaseGuid)); // Points to instrument node
+                    }
+                    break;
+
+                case ENodeId.CHUNKID_SILENCEINSTRUMENTBODY: // Silence Instrument Node
+                    {
+                        var node = new SilenceInstrumentNode(Ar);
+
+                        parentStack.Push(new FParentContext(nodeId, node.BaseGuid)); // Points to instrument node
                     }
                     break;
 
@@ -307,16 +338,6 @@ public class FModReader
                     {
                         var node = new TransitionTimelineNode(Ar);
                         TransitionTimelineNodes[transParent.Guid] = node;
-                        parentStack.Pop();
-                    }
-                    break;
-
-                case ENodeId.CHUNKID_PLAYLIST: // Playlist Node
-                    if (parentStack.TryPeek(out var parent) &&
-                        (parent.NodeId == ENodeId.CHUNKID_SCATTERERINSTRUMENTBODY ||
-                         parent.NodeId == ENodeId.CHUNKID_MULTIINSTRUMENTBODY))
-                    {
-                        PlaylistNodes[parent.Guid] = new PlaylistNode(Ar);
                         parentStack.Pop();
                     }
                     break;

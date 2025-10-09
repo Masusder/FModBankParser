@@ -14,6 +14,7 @@ public readonly struct FRoutable
 
     public FRoutable(BinaryReader Ar)
     {
+        Ar.ReadInt16(); // Payload size
         BaseGuid = new FModGuid(Ar);
         OutputChannelLayout = Ar.ReadUInt32();
         ChannelMask = Ar.ReadUInt32();

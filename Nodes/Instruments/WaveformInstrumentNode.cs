@@ -5,16 +5,16 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FModUEParser.Nodes.Buses;
+namespace FModUEParser.Nodes.Instruments;
 
-public class BaseBusNode
+public class WaveformInstrumentNode
 {
     public readonly FModGuid BaseGuid;
-    public readonly FRoutable Routable;
+    public readonly FModGuid WaveformResourceGuid;
 
-    public BaseBusNode(BinaryReader Ar)
+    public WaveformInstrumentNode(BinaryReader Ar)
     {
         BaseGuid = new FModGuid(Ar);
-        Routable = new FRoutable(Ar);
+        WaveformResourceGuid = new FModGuid(Ar);
     }
 }
