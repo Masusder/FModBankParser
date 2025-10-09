@@ -44,7 +44,7 @@ public class FModReader
         ParseNodes(Ar, Ar.BaseStream.Position, Ar.BaseStream.Length);
     }
 
-    private static void ParseHeader(BinaryReader Ar)
+    private void ParseHeader(BinaryReader Ar)
     {
         if (Ar.BaseStream.Length < 12)
             throw new Exception("File too small to be a valid RIFF header");
@@ -251,6 +251,12 @@ public class FModReader
                         }
                         break;
 
+                    case ENodeId.CHUNKID_CONTROLLEROWNER:
+                        {
+                            _ = new ControllerOwnerNode(Ar);
+                        }
+                        break;
+
                     case ENodeId.CHUNKID_CONTROLLER: // Controller Node
                         {
                             var node = new ControllerNode(Ar);
@@ -299,10 +305,6 @@ public class FModReader
             {
                 Console.WriteLine($"Warning: chunk {nodeId} did not parse fully (at {Ar.BaseStream.Position}, should be {nextNode})");
                 Ar.BaseStream.Position = nextNode;
-            }
-            else
-            {
-                Console.WriteLine($"Chunk {nodeId} parsed successfully ({nodeStart} -> {nextNode})");
             }
         }
     }
