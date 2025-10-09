@@ -1,6 +1,7 @@
 ﻿using Fmod5Sharp.FmodTypes;
 using FModUEParser.Enums;
 using FModUEParser.Nodes;
+using FModUEParser.Nodes.Buses;
 using FModUEParser.Objects;
 using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
@@ -71,9 +72,7 @@ public class FModReader
     {
         Ar.BaseStream.Position = start;
 
-        FModGuid? playlistParentGuid = null;
-        FModGuid? transitionParentGuid = null;
-
+        Stack<FParentContext> parentStack = [];
         bool visitedSoundNode = false;
         int soundDataIndex = 0;
 
@@ -92,207 +91,247 @@ public class FModReader
             }
 
             var nodeId = (ENodeId)rawNodeValue;
-
             int nodeSize = Ar.ReadInt32();
-            if (nodeId is ENodeId.CHUNKID_BUILTINEFFECTBODY) nodeSize++;
-
             long nextNode = nodeStart + 8 + nodeSize;
 
-            if (nodeSize != 0)
+            if (nodeSize == 0)
             {
-                switch (nodeId)
-                {
-                    case ENodeId.CHUNKID_FORMATINFO:
-                        FormatInfo = new FormatInfo(Ar);
-                        break;
+                Ar.BaseStream.Position = nextNode;
+                continue;
+            }
 
-                    case ENodeId.CHUNKID_BANKINFO:
-                        BankInfo = new BankInfoNode(Ar);
-                        break;
+            switch (nodeId)
+            {
+                case ENodeId.CHUNKID_FORMATINFO:
+                    FormatInfo = new FormatInfo(Ar);
+                    break;
 
-                    case ENodeId.CHUNKID_LIST: // List of sub-chunks
-                        var listNodeId = (ENodeId)Ar.ReadInt32();
-                        ParseNodes(Ar, Ar.BaseStream.Position, nextNode);
-                        break;
+                case ENodeId.CHUNKID_BANKINFO:
+                    BankInfo = new BankInfoNode(Ar);
+                    break;
 
-                    case ENodeId.CHUNKID_LISTCOUNT:
-                        var listCount = Ar.ReadUInt32();
-                        break;
+                case ENodeId.CHUNKID_LIST: // List of sub-chunks
+                    var listNodeId = (ENodeId)Ar.ReadInt32();
+                    ParseNodes(Ar, Ar.BaseStream.Position, nextNode);
+                    break;
 
-                    case ENodeId.CHUNKID_PROPERTY: // Property Node
+                case ENodeId.CHUNKID_LISTCOUNT:
+                    var listCount = Ar.ReadUInt32();
+                    break;
+
+                case ENodeId.CHUNKID_INPUTBUSBODY: // Input Bus Node
+                    {
+                        var node = new InputBusNode(Ar);
+
+                        parentStack.Push(new FParentContext(nodeId, node.BaseGuid)); // Points to bus node
+                    }
+                    break;
+
+                case ENodeId.CHUNKID_GROUPBUSBODY: // Group Bus Node
+                    {
+                        var node = new GroupBusNode(Ar);
+
+                        parentStack.Push(new FParentContext(nodeId, node.BaseGuid)); // Points to bus node
+                    }
+                    break;
+
+                case ENodeId.CHUNKID_MASTERBUSBODY: // Master Bus Node
+                    {
+                        var node = new MasterBusNode(Ar);
+
+                        parentStack.Push(new FParentContext(nodeId, node.BaseGuid)); // Points to bus node
+                    }
+                    break;
+
+                case ENodeId.CHUNKID_BUS: // Bus Node
+                    if (parentStack.TryPeek(out var busParent) &&
+                        (busParent.NodeId == ENodeId.CHUNKID_INPUTBUSBODY ||
+                        busParent.NodeId == ENodeId.CHUNKID_GROUPBUSBODY ||
+                        busParent.NodeId == ENodeId.CHUNKID_MASTERBUSBODY))
+                    {
+                        var node = new BusNode(Ar);
+                        parentStack.Pop();
+                    }
+                    break;
+
+                case ENodeId.CHUNKID_PROPERTY: // Property Node
+                    {
+                        var node = new PropertyNode(Ar);
+                        PropertyNodes[node.MappingGuid] = node;
+                    }
+                    break;
+
+                case ENodeId.CHUNKID_EVENTBODY: // Audio Event Node
+                    {
+                        var node = new EventNode(Ar);
+                        EventNodes[node.BaseGuid] = node;
+                    }
+                    break;
+
+                case ENodeId.CHUNKID_MODULATORBODY: // Modulator Node
+                    {
+                        var node = new ModulatorNode(Ar);
+                        ModulatorNodes[node.BaseGuid] = node;
+                    }
+                    break;
+
+                case ENodeId.CHUNKID_STRINGDATA: // String Data Node
+                    {
+                        StringData = new StringDataNode(Ar);
+                    }
+                    break;
+
+                case ENodeId.CHUNKID_PARAMETERBODY: // Parameter Node
+                    {
+                        var node = new ParameterNode(Ar);
+                        ParameterNodes[node.BaseGuid] = node;
+                    }
+                    break;
+
+                case ENodeId.CHUNKID_PARAMETERLAYOUTBODY: // Parameter Layout Node
+                    {
+                        var node = new ParameterLayoutNode(Ar);
+                        ParameterLayoutNodes[node.BaseGuid] = node;
+                    }
+                    break;
+
+                case ENodeId.CHUNKID_WAVEFORMRESOURCE: // Single WAV Node
+                    {
+                        var node = new WaveformResourceNode(Ar);
+                        WavEntries[node.BaseGuid] = node;
+                    }
+                    break;
+
+                case ENodeId.CHUNKID_COMMANDINSTRUMENTBODY: // Command Instrument Node
+                    {
+                        var node = new CommandInstrumentNode(Ar);
+                        CommandInstrumentNodes[node.BaseGuid] = node;
+                    }
+                    break;
+
+                case ENodeId.CHUNKID_SCATTERERINSTRUMENTBODY: // Scatterer Instrument Node
+                    {
+                        var node = new ScattererInstrumentNode(Ar);
+                        ScattererInstrumentNodes[node.BaseGuid] = node;
+
+                        parentStack.Push(new FParentContext(nodeId, node.BaseGuid)); // Points to playlist node
+                    }
+                    break;
+
+                case ENodeId.CHUNKID_MULTIINSTRUMENTBODY: // Multi Instrument Node
+                    parentStack.Push(new FParentContext(nodeId, new FModGuid(Ar))); // Points to playlist node
+                    break;
+
+                case ENodeId.CHUNKID_WAVEFORMINSTRUMENTBODY: // Waveform Instrument Node
+                    {
+                        var node = new WaveformInstrumentNode(Ar);
+                        WaveformInstrumentNodes[node.BaseGuid] = node.WaveformResourceGuid;
+                    }
+                    break;
+
+                case ENodeId.CHUNKID_INSTRUMENT: // Instrument Node
+                    {
+                        var node = new InstrumentNode(Ar);
+                        InstrumentNodes[node.TimelineGuid] = node;
+                    }
+                    break;
+
+                case ENodeId.CHUNKID_TIMELINEBODY: // Timeline Node
+                    {
+                        var node = new TimelineNode(Ar);
+                        TimelineNodes[node.BaseGuid] = node;
+                    }
+                    break;
+
+                case ENodeId.CHUNKID_TRANSITIONREGIONBODY: // Transition Region Node
+                    {
+                        var node = new TransitionRegionNode(Ar);
+                        TransitionRegionNodes[node.BaseGuid] = node;
+
+                        parentStack.Push(new FParentContext(nodeId, node.BaseGuid)); // Points to transition timeline node
+                    }
+                    break;
+
+                case ENodeId.CHUNKID_TRANSITIONTIMELINE: // Transition Timeline Node
+                    if (parentStack.TryPeek(out var transParent) &&
+                        transParent.NodeId == ENodeId.CHUNKID_TRANSITIONREGIONBODY)
+                    {
+                        var node = new TransitionTimelineNode(Ar);
+                        TransitionTimelineNodes[transParent.Guid] = node;
+                        parentStack.Pop();
+                    }
+                    break;
+
+                case ENodeId.CHUNKID_PLAYLIST: // Playlist Node
+                    if (parentStack.TryPeek(out var parent) &&
+                        (parent.NodeId == ENodeId.CHUNKID_SCATTERERINSTRUMENTBODY ||
+                         parent.NodeId == ENodeId.CHUNKID_MULTIINSTRUMENTBODY))
+                    {
+                        PlaylistNodes[parent.Guid] = new PlaylistNode(Ar);
+                        parentStack.Pop();
+                    }
+                    break;
+
+                case ENodeId.CHUNKID_BUILTINEFFECTBODY: // Built-in Effect Node
+                    {
+
+                    }
+                    break;
+
+                case ENodeId.CHUNKID_HASHDATA: // Hash Node
+                    {
+                        HashData = new HashDataNode(Ar).HashData;
+                    }
+                    break;
+
+                case ENodeId.CHUNKID_CURVE: // Curve Node
+                    {
+                        var node = new CurveNode(Ar);
+                        CurveNodes[node.BaseGuid] = node;
+                    }
+                    break;
+
+                case ENodeId.CHUNKID_CONTROLLEROWNER: // Controller Owner Node
+                    {
+                        _ = new ControllerOwnerNode(Ar);
+                    }
+                    break;
+
+                case ENodeId.CHUNKID_CONTROLLER: // Controller Node
+                    {
+                        var node = new ControllerNode(Ar);
+                        ControllerNodes[node.BaseGuid] = node;
+                    }
+                    break;
+
+                case ENodeId.CHUNKID_MAPPING: // Mapping Node
+                    {
+                        var node = new MappingNode(Ar);
+                        MappingNodes[node.BaseGuid] = node;
+                    }
+                    break;
+
+                case ENodeId.CHUNKID_SOUNDDATAHEADER: // Sound Data Header Node
+                    {
+                        SoundDataHeader = new SoundDataHeaderNode(Ar);
+                    }
+                    break;
+
+                case ENodeId.CHUNKID_SOUNDDATA: // Sound Data Node
+                    {
+                        var node = new SoundDataNode(Ar, nodeStart, nodeSize, soundDataIndex);
+                        visitedSoundNode = true;
+                        soundDataIndex++;
+                        if (node.SoundBank != null)
                         {
-                            var node = new PropertyNode(Ar);
-                            PropertyNodes[node.MappingGuid] = node;
+                            SoundBankData.Add(node.SoundBank);
                         }
-                        break;
+                    }
+                    break;
 
-                    case ENodeId.CHUNKID_EVENTBODY: // Audio Event Node
-                        {
-                            var node = new EventNode(Ar);
-                            EventNodes[node.BaseGuid] = node;
-                        }
-                        break;
-
-                    case ENodeId.CHUNKID_MODULATORBODY: // Modulator Node
-                        {
-                            var node = new ModulatorNode(Ar);
-                            ModulatorNodes[node.BaseGuid] = node;
-                        }
-                        break;
-
-                    case ENodeId.CHUNKID_STRINGDATA: // String Data Node
-                        {
-                            StringData = new StringDataNode(Ar);
-                        }
-                        break;
-
-                    case ENodeId.CHUNKID_PARAMETERBODY: // Parameter Node
-                        {
-                            var node = new ParameterNode(Ar);
-                            ParameterNodes[node.BaseGuid] = node;
-                        }
-                        break;
-
-                    case ENodeId.CHUNKID_PARAMETERLAYOUTBODY: // Parameter Layout Node
-                        {
-                            var node = new ParameterLayoutNode(Ar);
-                            ParameterLayoutNodes[node.BaseGuid] = node;
-                        }
-                        break;
-
-                    case ENodeId.CHUNKID_WAVEFORMRESOURCE: // Single WAV Node
-                        {
-                            var node = new WaveformResourceNode(Ar);
-                            WavEntries[node.BaseGuid] = node;
-                        }
-                        break;
-
-                    case ENodeId.CHUNKID_COMMANDINSTRUMENTBODY: // Command Instrument Node
-                        {
-                            var node = new CommandInstrumentNode(Ar);
-                            CommandInstrumentNodes[node.BaseGuid] = node;
-                        }
-                        break;
-
-                    case ENodeId.CHUNKID_SCATTERERINSTRUMENTBODY: // Scatterer Instrument Node
-                        {
-                            var node = new ScattererInstrumentNode(Ar);
-                            playlistParentGuid = node.BaseGuid; // Also points to playlist which always comes as a next node
-                            ScattererInstrumentNodes[node.BaseGuid] = node;
-                        }
-                        break;
-
-                    case ENodeId.CHUNKID_MULTIINSTRUMENTBODY: // Multi Instrument Node
-                        playlistParentGuid = new FModGuid(Ar); // Multi simply points to playlist which always comes as a next node
-                        break;
-
-                    case ENodeId.CHUNKID_WAVEFORMINSTRUMENTBODY: // Waveform Instrument Node
-                        {
-                            var node = new WaveformInstrumentNode(Ar);
-                            WaveformInstrumentNodes[node.BaseGuid] = node.WaveformResourceGuid;
-                        }
-                        break;
-
-                    case ENodeId.CHUNKID_INSTRUMENT: // Instrument Node
-                        {
-                            var node = new InstrumentNode(Ar);
-                            InstrumentNodes[node.TimelineGuid] = node;
-                        }
-                        break;
-
-                    case ENodeId.CHUNKID_TIMELINEBODY: // Timeline Node
-                        {
-                            var node = new TimelineNode(Ar);
-                            TimelineNodes[node.BaseGuid] = node;
-                        }
-                        break;
-
-                    case ENodeId.CHUNKID_TRANSITIONREGIONBODY: // Transition Region Node
-                        {
-                            var node = new TransitionRegionNode(Ar);
-                            TransitionRegionNodes[node.BaseGuid] = node;
-                            transitionParentGuid = node.BaseGuid;
-                        }
-                        break;
-
-                    case ENodeId.CHUNKID_TRANSITIONTIMELINE: // Transition Timeline Node
-                        if (transitionParentGuid != null)
-                        {
-                            var node = new TransitionTimelineNode(Ar);
-                            TransitionTimelineNodes[transitionParentGuid.Value] = node;
-                            transitionParentGuid = null;
-                        }
-                        break;
-
-                    case ENodeId.CHUNKID_PLAYLIST: // Playlist Node
-                        if (playlistParentGuid != null)
-                        {
-                            PlaylistNodes[playlistParentGuid.Value] = new PlaylistNode(Ar);
-                            playlistParentGuid = null;
-                        }
-                        break;
-
-                    case ENodeId.CHUNKID_BUILTINEFFECTBODY:
-                        {
-                            Ar.ReadByte(); // Unknown byte that isn't a part of BEFF body
-                        }
-                        break;
-
-                    case ENodeId.CHUNKID_HASHDATA: // Hash Node
-                        {
-                            HashData = new HashDataNode(Ar).HashData;
-                        }
-                        break;
-
-                    case ENodeId.CHUNKID_CURVE: // Curve Node
-                        {
-                            var node = new CurveNode(Ar);
-                            CurveNodes[node.BaseGuid] = node;
-                        }
-                        break;
-
-                    case ENodeId.CHUNKID_CONTROLLEROWNER:
-                        {
-                            _ = new ControllerOwnerNode(Ar);
-                        }
-                        break;
-
-                    case ENodeId.CHUNKID_CONTROLLER: // Controller Node
-                        {
-                            var node = new ControllerNode(Ar);
-                            ControllerNodes[node.BaseGuid] = node; 
-                        }
-                        break;
-
-                    case ENodeId.CHUNKID_MAPPING: // Mapping Node
-                        {
-                            var node = new MappingNode(Ar);
-                            MappingNodes[node.BaseGuid] = node;
-                        }
-                        break;
-
-                    case ENodeId.CHUNKID_SOUNDDATAHEADER: // Sound Data Header Node
-                        {
-                            SoundDataHeader = new SoundDataHeaderNode(Ar);
-                        }
-                        break;
-
-                    case ENodeId.CHUNKID_SOUNDDATA: // Sound Data Node
-                        {
-                            var node = new SoundDataNode(Ar, nodeStart, nodeSize, soundDataIndex);
-                            visitedSoundNode = true;
-                            soundDataIndex++;
-                            if (node.SoundBank != null)
-                            {
-                                SoundBankData.Add(node.SoundBank);
-                            }
-                        }
-                        break;
-
-                    default:
-                        Console.WriteLine($"Unknown chunk {nodeId} at {nodeStart}, size={nodeSize}, skipped");
-                        break;
-                }
+                default:
+                    Console.WriteLine($"Unknown chunk {nodeId} at {nodeStart}, size={nodeSize}, skipped");
+                    break;
             }
 
             // Stop if we already visited a sound node and current node is NOT sound node
@@ -316,12 +355,14 @@ public class FModReader
         short signedLow = Ar.ReadInt16();
         ushort low = (ushort)signedLow;
         uint value = low;
+
         if ((low & 0x8000) != 0)
         {
             ushort high = Ar.ReadUInt16();
             value &= 0x7FFFu;
             value |= ((uint)high << 15);
         }
+
         return value;
     }
 
@@ -344,20 +385,36 @@ public class FModReader
         if (count <= 0) return [];
 
         var result = new T[count];
-
-        ushort elementSize = Ar.ReadUInt16();
+        _ = Ar.ReadUInt16(); // Payload size
 
         for (int i = 0; i < count; i++)
         {
             result[i] = (T)Activator.CreateInstance(typeof(T), Ar)!;
 
-            if (i < count - 1) elementSize = Ar.ReadUInt16();
+            if (i < count - 1) _ = Ar.ReadUInt16(); // Payload size
         }
 
         return result;
     }
 
-    public static T[] ReadElemListImp<T>(BinaryReader Ar, int? size = null, bool readPayloadInLoop = false)
+    public static T[] ReadFixElemList<T>(BinaryReader Ar, Func<BinaryReader, T> readElem)
+    {
+        uint raw = ReadX16(Ar);
+        int count = (int)(raw >> 1);
+        bool hasSizePrefix = (raw & 1) != 0;
+
+        if (count <= 0) return [];
+
+        if (hasSizePrefix) _ = Ar.ReadUInt16(); // Payload size
+
+        var result = new T[count];
+        for (int i = 0; i < count; i++)
+            result[i] = readElem(Ar);
+
+        return result;
+    }
+
+    public static T[] ReadElemListImp<T>(BinaryReader Ar, int? expectedSize = null)
     {
 
         uint raw = ReadX16(Ar);
@@ -369,20 +426,16 @@ public class FModReader
         var result = new T[count];
 
         ushort elementSize = 0;
-        if (hasSizePrefix)
-        {
-            elementSize = Ar.ReadUInt16();
-        }
+        if (hasSizePrefix) elementSize = Ar.ReadUInt16();
 
         for (int i = 0; i < count; i++)
         {
-            // I don't know what do in case where the element size is different than expected so I'll just skip it
-            // (probably we're just reading it wrong and this should actually throw)
-            if (hasSizePrefix && size != null && elementSize != size)
+            // Pass size for debugging purposes only
+            if (hasSizePrefix && expectedSize != null && elementSize != expectedSize)
             {
                 Ar.BaseStream.Position += elementSize;
 #if DEBUG
-                Console.WriteLine($"Warning: '{typeof(T).Name}' element size {elementSize} does not match expected {size}, skipping");
+                Console.WriteLine($"Warning: '{typeof(T).Name}' element size {elementSize} does not match expected {expectedSize}, skipping");
 #endif
             }
             else
