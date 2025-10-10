@@ -5,16 +5,16 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FModUEParser.Nodes;
+namespace FModUEParser.Metadata;
 
-public class BankInfoNode
+public readonly struct FBankInfo
 {
     public readonly FModGuid BaseGuid;
     public readonly ulong Hash;
     public readonly int FileVersion;
     public readonly int ExportFlags;
 
-    public BankInfoNode(BinaryReader Ar)
+    public FBankInfo(BinaryReader Ar)
     {
         BaseGuid = new FModGuid(Ar);
         Hash = Ar.ReadUInt64();

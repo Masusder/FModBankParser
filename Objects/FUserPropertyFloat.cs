@@ -13,7 +13,7 @@ public readonly struct FUserPropertyFloat
 
     public FUserPropertyFloat(BinaryReader Ar)
     {
-        Name = FModReader.ReadSerializedString(Ar);
+        Name = FModReader.ReadString(Ar);
         Value = Ar.ReadSingle();
     }
 }

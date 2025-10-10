@@ -4,14 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FModUEParser.Nodes;
+namespace FModUEParser.Metadata;
 
-public class FormatInfo
+public readonly struct FFormatInfo
 {
     public readonly int FileVersion;
     public readonly int CompatVersion;
 
-    public FormatInfo(BinaryReader Ar)
+    public FFormatInfo(BinaryReader Ar)
     {
         FileVersion = Ar.ReadInt32();
         CompatVersion = Ar.ReadInt32();

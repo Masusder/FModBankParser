@@ -17,7 +17,7 @@ public readonly struct FTimelineNamedMarker
     {
         BaseGuid = new FModGuid(Ar);
         Position = Ar.ReadUInt32();
-        Name = FModReader.ReadSerializedString(Ar);
+        Name = FModReader.ReadString(Ar);
 
         if (FModReader.Version >= 0x79)
         {

@@ -13,7 +13,7 @@ public readonly struct FUserPropertyString
 
     public FUserPropertyString(BinaryReader Ar)
     {
-        Key = FModReader.ReadSerializedString(Ar);
-        Value = FModReader.ReadSerializedString(Ar);
+        Key = FModReader.ReadString(Ar);
+        Value = FModReader.ReadString(Ar);
     }
 }

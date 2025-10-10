@@ -1,11 +1,13 @@
-﻿namespace FModUEParser.Objects;
+﻿using FModUEParser.Objects;
 
-public readonly struct FHashData
+namespace FModUEParser.Metadata;
+
+public readonly struct FHashInfo
 {
     public readonly FModGuid Guid;
     public readonly uint Hash;
 
-    public FHashData(BinaryReader Ar)
+    public FHashInfo(BinaryReader Ar)
     {
         Guid = new FModGuid(Ar);
         Hash = Ar.ReadUInt32();

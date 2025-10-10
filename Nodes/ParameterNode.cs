@@ -32,7 +32,7 @@ public class ParameterNode
         if (FModReader.Version >= 0x70)
         {
             type = (EFModStudioParameterType)Ar.ReadUInt32();
-            Name = FModReader.ReadSerializedString(Ar);
+            Name = FModReader.ReadString(Ar);
             Minimum = Ar.ReadSingle();
             Maximum = Ar.ReadSingle();
             DefaultValue = Ar.ReadSingle();
@@ -40,9 +40,11 @@ public class ParameterNode
 
             if (FModReader.Version < 0x8f) SeekSpeed = Ar.ReadSingle();
 
-            Labels = FModReader.ReadVersionedElemListImp(Ar, FModReader.ReadSerializedString);
+            Labels = FModReader.ReadVersionedElemListImp(Ar, FModReader.ReadString);
         }
 
         Type = type;
+
+        if (FModReader.Version >= 0x52 && FModReader.Version <= 0x8E) SeekSpeedDown = Ar.ReadSingle();
     }
 }

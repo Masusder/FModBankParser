@@ -17,5 +17,10 @@ public class BuiltInEffectNode
     {
         BaseGuid = new FModGuid(Ar);
         DSPType = (EDSPType)Ar.ReadUInt32();
+
+        if (FModReader.Version >= 0x3D && FModReader.Version <= 0x91)
+        {
+            bool legacyBypass = Ar.ReadBoolean();
+        }
     }
 }

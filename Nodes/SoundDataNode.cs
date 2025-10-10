@@ -10,24 +10,13 @@ namespace FModUEParser.Nodes;
 
 public class SoundDataNode
 {
-    //private static readonly byte[] FSB5 = Encoding.ASCII.GetBytes("FSB5");
-
-    public FmodSoundBank? SoundBank { get; }
+    public readonly FmodSoundBank? SoundBank;
 
     public SoundDataNode(BinaryReader Ar, long nodeStart, int size, int soundDataIndex)
     {
         byte[] sndChunk = Ar.ReadBytes(size);
 
-        //int fsbPos = FindFsbOffset(sndChunk);
-        //if (fsbPos < 0)
-        //{
-        //    Console.WriteLine("No FSB5 found in SND chunk");
-        //    return;
-        //}
-
-        //Console.WriteLine($"Found FSB5 at offset {fsbPos} inside SND chunk");
-
-        int fsbOffset = FModReader.SoundDataHeader!.Header[soundDataIndex].FSBOffset;
+        uint fsbOffset = FModReader.SoundDataInfo!.Header[soundDataIndex].FSBOffset;
 
         var relativeOffset = (int)(fsbOffset - nodeStart) - 8;
 
@@ -40,25 +29,12 @@ public class SoundDataNode
             for (int i = 0; i < bank.Samples.Count; i++)
             {
                 var sample = bank.Samples[i];
-                Console.WriteLine($"Sample: {sample.Name}, Index: {i}");
+                //Console.WriteLine($"Sample: {sample.Name}, Index: {i}");
             }
         }
         else
         {
-            Console.WriteLine("Failed to parse FSB5 at detected position");
+            Console.WriteLine($"Failed to parse FSB5 at {fsbOffset}");
         }
     }
-
-    //private static int FindFsbOffset(byte[] data)
-    //{
-    //    int maxScan = Math.Min(data.Length, 64);
-
-    //    for (int i = 0; i <= maxScan - FSB5.Length; i++)
-    //    {
-    //        if (data[i..(i + FSB5.Length)].SequenceEqual(FSB5))
-    //            return i;
-    //    }
-
-    //    return -1;
-    //}
 }

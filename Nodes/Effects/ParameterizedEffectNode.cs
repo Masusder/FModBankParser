@@ -9,17 +9,16 @@ namespace FModUEParser.Nodes.Effects;
 
 public class ParameterizedEffectNode
 {
-    public readonly List<FEffectParameter> Parameters;
+    public readonly FEffectParameter[] Parameters;
     public readonly bool SideChainEnabled;
 
     public ParameterizedEffectNode(BinaryReader Ar)
     {
         int paramCount = Ar.ReadInt32();
-
-        Parameters = new List<FEffectParameter>(paramCount);
+        Parameters = new FEffectParameter[paramCount];
         for (int i = 0; i < paramCount; i++)
         {
-            Parameters.Add(new FEffectParameter(Ar));
+            Parameters[i] = new FEffectParameter(Ar);
         }
 
         if (FModReader.Version >= 0x6e)

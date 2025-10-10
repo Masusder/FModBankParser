@@ -1,5 +1,6 @@
 ﻿using Fmod5Sharp.FmodTypes;
 using FModUEParser.Enums;
+using FModUEParser.Metadata;
 using FModUEParser.Nodes;
 using FModUEParser.Nodes.Buses;
 using FModUEParser.Nodes.Effects;
@@ -15,10 +16,12 @@ namespace FModUEParser;
 public class FModReader
 {
     public static int Version => FormatInfo.FileVersion;
-    public static FormatInfo FormatInfo = null!;
-    public static SoundDataHeaderNode? SoundDataHeader;
-    public StringDataNode? StringData;
-    public BankInfoNode? BankInfo;
+    public static FFormatInfo FormatInfo;
+    public static SoundDataInfo? SoundDataInfo;
+    public StringTable? StringTable;
+    public FBankInfo? BankInfo;
+    public FHashInfo[] HashData = [];
+    public List<FmodSoundBank> SoundBankData = [];
 
     public readonly Dictionary<FModGuid, EventNode> EventNodes = [];
     public readonly Dictionary<FModGuid, BusNode> BusNodes = [];
@@ -39,10 +42,8 @@ public class FModReader
     public readonly Dictionary<FModGuid, ParameterLayoutNode> ParameterLayoutNodes = [];
     public readonly Dictionary<FModGuid, ControllerNode> ControllerNodes = [];
     public readonly Dictionary<FModGuid, SnapshotNode> SnapshotNodes = [];
+    public readonly Dictionary<FModGuid, VCANode> VCANodes = [];
     public readonly Dictionary<FModGuid, FModGuid> WaveformInstrumentNodes = [];
-
-    public List<FmodSoundBank> SoundBankData = [];
-    public FHashData[] HashData = [];
 
     public FModReader(BinaryReader Ar)
     {
@@ -108,11 +109,11 @@ public class FModReader
             switch (nodeId)
             {
                 case ENodeId.CHUNKID_FORMATINFO:
-                    FormatInfo = new FormatInfo(Ar);
+                    FormatInfo = new FFormatInfo(Ar);
                     break;
 
                 case ENodeId.CHUNKID_BANKINFO:
-                    BankInfo = new BankInfoNode(Ar);
+                    BankInfo = new FBankInfo(Ar);
                     break;
 
                 case ENodeId.CHUNKID_LIST: // List of sub-chunks
@@ -122,6 +123,14 @@ public class FModReader
 
                 case ENodeId.CHUNKID_LISTCOUNT:
                     var listCount = Ar.ReadUInt32();
+                    break;
+
+                case ENodeId.CHUNKID_RETURNBUSBODY: // Return Bus Node
+                    {
+                        var node = new ReturnBusNode(Ar);
+
+                        parentStack.Push(new FParentContext(nodeId, node.BaseGuid)); // Points to bus node
+                    }
                     break;
 
                 case ENodeId.CHUNKID_INPUTBUSBODY: // Input Bus Node
@@ -152,7 +161,8 @@ public class FModReader
                     if (parentStack.TryPeek(out var busParent) &&
                         (busParent.NodeId == ENodeId.CHUNKID_INPUTBUSBODY ||
                         busParent.NodeId == ENodeId.CHUNKID_GROUPBUSBODY ||
-                        busParent.NodeId == ENodeId.CHUNKID_MASTERBUSBODY))
+                        busParent.NodeId == ENodeId.CHUNKID_MASTERBUSBODY ||
+                        busParent.NodeId == ENodeId.CHUNKID_RETURNBUSBODY))
                     {
                         var node = new BusNode(Ar);
                         BusNodes[busParent.Guid] = node;
@@ -160,9 +170,17 @@ public class FModReader
                     }
                     break;
 
+                case ENodeId.CHUNKID_SPECTRALSIDECHAINEFFECT: // Spectral Side Chain Effect Node
+                    {
+                        var node = new SpectralSideChainEffectNode(Ar);
+                        parentStack.Push(new FParentContext(nodeId, node.BaseGuid)); // Points to effect node
+                    }
+                    break;
+
                 case ENodeId.CHUNKID_BUILTINEFFECTBODY: // Built-in Effect Node
                     {
                         var node = new BuiltInEffectNode(Ar);
+
                         parentStack.Push(new FParentContext(nodeId, node.BaseGuid)); // Points to parameterized effect node
                     }
                     break;
@@ -198,7 +216,8 @@ public class FModReader
                     if (parentStack.TryPeek(out var effectParent) &&
                         (effectParent.NodeId == ENodeId.CHUNKID_PARAMETERIZEDEFFECT ||
                         effectParent.NodeId == ENodeId.CHUNKID_SENDEFFECTBODY ||
-                        effectParent.NodeId == ENodeId.CHUNKID_SIDECHAINEFFECT))
+                        effectParent.NodeId == ENodeId.CHUNKID_SIDECHAINEFFECT ||
+                        effectParent.NodeId == ENodeId.CHUNKID_SPECTRALSIDECHAINEFFECT))
                     {
                         var node = new EffectNode(Ar);
                         EffectNodes[effectParent.Guid] = node;
@@ -228,7 +247,7 @@ public class FModReader
 
                 case ENodeId.CHUNKID_STRINGDATA: // String Data Node
                     {
-                        StringData = new StringDataNode(Ar);
+                        StringTable = new StringTable(Ar);
                     }
                     break;
 
@@ -273,6 +292,14 @@ public class FModReader
                     {
                         PlaylistNodes[parent.Guid] = new PlaylistNode(Ar);
                         parentStack.Pop();
+                    }
+                    break;
+
+                case ENodeId.CHUNKID_PROGRAMMERINSTRUMENTBODY: // Programmer Instrument Node
+                    {
+                        var node = new ProgrammerInstrumentNode(Ar);
+
+                        parentStack.Push(new FParentContext(nodeId, node.BaseGuid)); // Points to instrument node
                     }
                     break;
 
@@ -350,6 +377,13 @@ public class FModReader
                     }
                     break;
 
+                case ENodeId.CHUNKID_VCABODY: // VCA Node
+                    {
+                        var node = new VCANode(Ar);
+                        VCANodes[node.BaseGuid] = node;
+                    }
+                    break;
+
                 case ENodeId.CHUNKID_HASHDATA: // Hash Node
                     {
                         HashData = new HashDataNode(Ar).HashData;
@@ -383,9 +417,15 @@ public class FModReader
                     }
                     break;
 
+                case ENodeId.CHUNKID_PLATFORM_INFO: // Platform Info Node
+                    {
+                        new FModGuid(Ar);
+                    }
+                    break;
+
                 case ENodeId.CHUNKID_SOUNDDATAHEADER: // Sound Data Header Node
                     {
-                        SoundDataHeader = new SoundDataHeaderNode(Ar);
+                        SoundDataInfo = new SoundDataInfo(Ar);
                     }
                     break;
 
@@ -438,7 +478,7 @@ public class FModReader
         return value;
     }
 
-    public static string ReadSerializedString(BinaryReader Ar)
+    public static string ReadString(BinaryReader Ar)
     {
         uint length = ReadX16(Ar);
 
@@ -495,22 +535,18 @@ public class FModReader
 
     public static T[] ReadElemListImp<T>(BinaryReader Ar, int? expectedSize = null)
     {
-
         uint raw = ReadX16(Ar);
         int count = (int)(raw >> 1);
-        bool hasSizePrefix = (raw & 1) != 0; // Element list "size prefix" is a single size value used for the element payloads
 
         if (count <= 0) return [];
 
         var result = new T[count];
 
-        ushort elementSize = 0;
-        if (hasSizePrefix) elementSize = Ar.ReadUInt16();
-
+        ushort elementSize = Ar.ReadUInt16();
         for (int i = 0; i < count; i++)
         {
             // Pass size for debugging purposes only
-            if (hasSizePrefix && expectedSize != null && elementSize != expectedSize)
+            if (expectedSize != null && elementSize != expectedSize)
             {
                 Ar.BaseStream.Position += elementSize;
 #if DEBUG

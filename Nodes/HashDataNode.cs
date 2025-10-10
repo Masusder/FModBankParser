@@ -1,4 +1,4 @@
-﻿using FModUEParser.Objects;
+﻿using FModUEParser.Metadata;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,10 +9,10 @@ namespace FModUEParser.Nodes;
 
 public class HashDataNode
 {
-    public readonly FHashData[] HashData = [];
+    public readonly FHashInfo[] HashData = [];
 
     public HashDataNode(BinaryReader Ar)
     {
-        HashData = FModReader.ReadElemListImp<FHashData>(Ar);
+        HashData = FModReader.ReadElemListImp<FHashInfo>(Ar);
     }
 }

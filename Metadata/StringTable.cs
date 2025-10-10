@@ -4,14 +4,14 @@ using System;
 using System.IO;
 using System.Text;
 
-namespace FModUEParser.Nodes;
+namespace FModUEParser.Metadata;
 
-public class StringDataNode
+public class StringTable
 {
     public readonly EStringTableType Type;
     public readonly FRadixTreePacked? RadixTree;
 
-    public StringDataNode(BinaryReader Ar)
+    public StringTable(BinaryReader Ar)
     {
         Type = (EStringTableType)Ar.ReadUInt32();
 
