@@ -107,7 +107,7 @@ public enum ENodeId : int // RIFFID
     LISTID_RETURNBUSES = 0x53534252,                // RBSS
     LISTID_MASTERBUSES = 0x5353424d,                // MBSS
     LISTID_OUTPUTPORTS = 0x53545250,                // PRTS
-    LISTID_BUILTINEFFECTS = 0x58464542,             // BEXF
+    LISTID_BUILTINEFFECTS = 0x58464542,             // BEFX
     LISTID_PLUGINEFFECTS = 0x58464550,              // PEXF
     LISTID_SENDEFFECTS = 0x58464553,                // SEXF
     LISTID_SIDECHAINEFFECTS = 0x58464353,           // SCXF

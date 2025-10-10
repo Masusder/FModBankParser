@@ -43,8 +43,8 @@ public class BusNode
         MaximumPolyphony = Ar.ReadInt32();
         PolyphonyLimitBehavior = Ar.ReadInt32();
 
-        PreFaderInputChannelLayouts = FModReader.ReadFixElemList(Ar, Ar => Ar.ReadUInt32());
-        PostFaderInputChannelLayouts = FModReader.ReadFixElemList(Ar, Ar => Ar.ReadUInt32());
+        PreFaderInputChannelLayouts = FModReader.ReadElemListImp(Ar, Ar => Ar.ReadUInt32());
+        PostFaderInputChannelLayouts = FModReader.ReadElemListImp(Ar, Ar => Ar.ReadUInt32());
 
         if (FModReader.Version >= 0x6f)
         {

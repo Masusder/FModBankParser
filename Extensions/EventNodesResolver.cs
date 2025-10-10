@@ -14,9 +14,9 @@ public static class EventNodesResolver
         foreach (var (eventGuid, evNode) in reader.EventNodes)
         {
             var samples = ResolveEventNodesWithAudio(reader, evNode);
-            if (samples.Count > 0)
-                result[eventGuid] = samples;
+            if (samples.Count > 0) result[eventGuid] = samples;
         }
+
         return result;
     }
 
@@ -28,79 +28,57 @@ public static class EventNodesResolver
 
         if (reader.TimelineNodes.TryGetValue(evNode.TimelineGuid, out var tmlNode))
         {
-            PushTriggerBoxes(stack, tmlNode.TriggerBoxes);
-            PushTriggerBoxes(stack, tmlNode.TimeLockedTriggerBoxes);
+            foreach (var box in tmlNode.TriggerBoxes) stack.Push(box.Guid);
+            foreach (var box in tmlNode.TimeLockedTriggerBoxes) stack.Push(box.Guid);
         }
         else
         {
             stack.Push(evNode.TimelineGuid);
         }
 
-        if (evNode.ParameterLayouts != null)
+        foreach (var param in evNode.ParameterLayouts) stack.Push(param);
+
+        foreach (var paramGuid in evNode.ParameterLayouts)
         {
-            foreach (var param in evNode.ParameterLayouts)
-                stack.Push(param);
-
-            foreach (var paramGuid in evNode.ParameterLayouts)
+            if (reader.ParameterLayoutNodes.TryGetValue(paramGuid, out var paramLayoutNode))
             {
-                if (reader.ParameterLayoutNodes != null && reader.ParameterLayoutNodes.TryGetValue(paramGuid, out var paramLayoutNode))
-                {
-                    if (paramLayoutNode.Instruments != null)
-                        foreach (var instGuid in paramLayoutNode.Instruments)
-                            stack.Push(instGuid);
-
-                    if (paramLayoutNode.Controllers != null)
-                        foreach (var controllerGuid in paramLayoutNode.Controllers)
-                            stack.Push(controllerGuid);
-
-                    if (paramLayoutNode.TriggerBoxes != null)
-                        foreach (var triggerBoxGuid in paramLayoutNode.TriggerBoxes)
-                            stack.Push(triggerBoxGuid);
-                }
+                foreach (var instGuid in paramLayoutNode.Instruments) stack.Push(instGuid);
+                foreach (var controllerGuid in paramLayoutNode.Controllers) stack.Push(controllerGuid);
+                foreach (var triggerBoxGuid in paramLayoutNode.TriggerBoxes) stack.Push(triggerBoxGuid);
             }
         }
 
-        if (evNode.EventTriggeredInstruments != null)
-            foreach (var inst in evNode.EventTriggeredInstruments)
-                stack.Push(inst);
+        foreach (var inst in evNode.EventTriggeredInstruments) stack.Push(inst);
 
         while (stack.Count > 0)
         {
             var guid = stack.Pop();
-            if (!visited.Add(guid))
-                continue;
+            if (!visited.Add(guid)) continue;
 
             if (reader.PlaylistNodes.TryGetValue(guid, out var plstNode))
             {
-                foreach (var plstEntry in plstNode.Entries)
-                    stack.Push(plstEntry.Guid);
-
-                continue;
+                foreach (var plstEntry in plstNode.Entries) stack.Push(plstEntry.Guid);
             }
 
-            if (reader.WaveformInstrumentNodes.TryGetValue(guid, out var wavGuid) && 
-                reader.WavEntries.TryGetValue(wavGuid, out var entry) && 
-                reader.SoundBankData.Count > 0 && 
+            if (reader.InstrumentNodes.TryGetValue(guid, out var instNode)) stack.Push(instNode.TimelineGuid);
+
+            if (reader.TimelineNodes.TryGetValue(guid, out var tmlNode2))
+            {
+                foreach (var box in tmlNode2.TriggerBoxes) stack.Push(box.Guid);
+                foreach (var box in tmlNode2.TimeLockedTriggerBoxes) stack.Push(box.Guid);
+            }
+
+            if (reader.WaveformInstrumentNodes.TryGetValue(guid, out var wavGuid) &&
+                reader.WavEntries.TryGetValue(wavGuid, out var entry) &&
+                reader.SoundBankData.Count > 0 &&
                 entry.SoundBankIndex < reader.SoundBankData[entry.SubsoundIndex].Samples.Count)
             {
                 result.Add(reader.SoundBankData[entry.SubsoundIndex].Samples[entry.SoundBankIndex]);
                 continue;
             }
-
-            if (reader.TimelineNodes.TryGetValue(guid, out var tmlNode2))
-            {
-                PushTriggerBoxes(stack, tmlNode2.TriggerBoxes);
-                PushTriggerBoxes(stack, tmlNode2.TimeLockedTriggerBoxes);
-            }
         }
 
         return [.. result];
-    }
-
-    private static void PushTriggerBoxes(Stack<FModGuid> stack, FTriggerBox[] boxes)
-    {
-        foreach (var box in boxes)
-            stack.Push(box.Guid);
     }
 
     private static HashSet<string> GetAllResolvedSampleNames(Dictionary<FModGuid, List<FmodSample>> resolvedEvents)
