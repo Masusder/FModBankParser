@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace FModUEParser.Objects;
 
-public class FEffectParameter
+public readonly struct FEffectParameter
 {
     public readonly int Type;
     public readonly float FloatValue;
@@ -15,7 +15,7 @@ public class FEffectParameter
     public FEffectParameter(BinaryReader Ar)
     {
         int paramType = Ar.ReadInt32();
-        if (paramType < 0 || paramType > 3) throw new InvalidDataException($"Invalid parameter type {paramType}");
+        if (paramType < 0 || paramType > 3) throw new InvalidDataException($"Invalid parameter type: {paramType}");
 
         Type = paramType;
 
@@ -38,7 +38,7 @@ public class FEffectParameter
                 FloatValue = 0;
                 break;
             default:
-                throw new InvalidDataException($"Unknown parameter type {paramType}");
+                throw new InvalidDataException($"Unknown parameter type: {paramType}");
         }
     }
 }

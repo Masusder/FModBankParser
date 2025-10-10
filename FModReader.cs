@@ -38,6 +38,7 @@ public class FModReader
     public readonly Dictionary<FModGuid, MappingNode> MappingNodes = [];
     public readonly Dictionary<FModGuid, ParameterLayoutNode> ParameterLayoutNodes = [];
     public readonly Dictionary<FModGuid, ControllerNode> ControllerNodes = [];
+    public readonly Dictionary<FModGuid, SnapshotNode> SnapshotNodes = [];
     public readonly Dictionary<FModGuid, FModGuid> WaveformInstrumentNodes = [];
 
     public List<FmodSoundBank> SoundBankData = [];
@@ -339,6 +340,13 @@ public class FModReader
                         var node = new TransitionTimelineNode(Ar);
                         TransitionTimelineNodes[transParent.Guid] = node;
                         parentStack.Pop();
+                    }
+                    break;
+
+                case ENodeId.CHUNKID_SNAPSHOTBODY: // Snapshot Node
+                    {
+                        var node = new SnapshotNode(Ar);
+                        SnapshotNodes[node.BaseGuid] = node;
                     }
                     break;
 
