@@ -449,7 +449,7 @@ public class FModReader
         return Encoding.UTF8.GetString(bytes);
     }
 
-    public static T[] ReadVersionedElemListImp<T>(BinaryReader Ar)
+    public static T[] ReadVersionedElemListImp<T>(BinaryReader Ar, Func<BinaryReader, T>? readElem = null)
     {
         uint raw = ReadX16(Ar);
         int count = (int)(raw >> 1);
@@ -461,7 +461,14 @@ public class FModReader
 
         for (int i = 0; i < count; i++)
         {
-            result[i] = (T)Activator.CreateInstance(typeof(T), Ar)!;
+            if (readElem != null)
+            {
+                result[i] = readElem(Ar);
+            }
+            else
+            {
+                result[i] = (T)Activator.CreateInstance(typeof(T), Ar)!;
+            }
 
             if (i < count - 1) _ = Ar.ReadUInt16(); // Payload size
         }

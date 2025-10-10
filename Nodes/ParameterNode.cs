@@ -20,6 +20,7 @@ public class ParameterNode
     public readonly float Velocity;
     public readonly float SeekSpeed;
     public readonly float SeekSpeedDown;
+    public readonly string[] Labels = [];
 
     public ParameterNode(BinaryReader Ar)
     {
@@ -31,15 +32,15 @@ public class ParameterNode
         if (FModReader.Version >= 0x70)
         {
             type = (EFModStudioParameterType)Ar.ReadUInt32();
-
             Name = FModReader.ReadSerializedString(Ar);
             Minimum = Ar.ReadSingle();
             Maximum = Ar.ReadSingle();
             DefaultValue = Ar.ReadSingle();
             Velocity = Ar.ReadSingle();
-            SeekSpeed = Ar.ReadSingle();
 
-            // TODO: more to read 
+            if (FModReader.Version < 0x8f) SeekSpeed = Ar.ReadSingle();
+
+            Labels = FModReader.ReadVersionedElemListImp(Ar, FModReader.ReadSerializedString);
         }
 
         Type = type;
