@@ -423,6 +423,12 @@ public class FModReader
                     }
                     break;
 
+                case ENodeId.CHUNKID_SOUNDTABLE: // Sound Table Node
+                    {
+                        _ = new SoundTable(Ar);
+                    }
+                    break;
+
                 case ENodeId.CHUNKID_SOUNDDATAHEADER: // Sound Data Header Node
                     {
                         SoundDataInfo = new SoundDataInfo(Ar);
@@ -560,6 +566,29 @@ public class FModReader
         }
 
         return result;
+    }
+
+    public static FUInt24[] ReadSimpleArray24(BinaryReader Ar)
+    {
+        uint count = ReadX16(Ar);
+
+        if (count == 0) return [];
+
+        int totalBytes = checked((int)count * 3); // 3 bytes per entry
+        byte[] raw = Ar.ReadBytes(totalBytes);
+
+        if (raw.Length != totalBytes)
+            throw new EndOfStreamException($"Expected {totalBytes} bytes, got {raw.Length}");
+
+        var arr = new FUInt24[count];
+        int o = 0;
+        for (int i = 0; i < count; i++)
+        {
+            uint v = (uint)(raw[o] | (raw[o + 1] << 8) | (raw[o + 2] << 16));
+            o += 3;
+            arr[i] = new FUInt24(v);
+        }
+        return arr;
     }
 
     #endregion

@@ -36,8 +36,8 @@ public partial class FRadixTreePacked
 
         if (type is EStringTableType.StringTable_RadixTree_24Bit)
         {
-            LeafIndices = ReadSimpleArray24(Ar);
-            ParentIndices = ReadSimpleArray24(Ar);
+            LeafIndices = FModReader.ReadSimpleArray24(Ar);
+            ParentIndices = FModReader.ReadSimpleArray24(Ar);
         }
 
         for (int i = 0; i < Guids.Length; i++)
@@ -45,42 +45,11 @@ public partial class FRadixTreePacked
     }
 
     #region Readers
-    private static uint ReadUInt24(BinaryReader br)
-    {
-        int b0 = br.ReadByte();
-        int b1 = br.ReadByte();
-        int b2 = br.ReadByte();
-        return (uint)(b0 | (b1 << 8) | (b2 << 16));
-    }
-
     private static byte[] ReadByteArray(BinaryReader Ar)
     {
         uint count = FModReader.ReadX16(Ar);
         var data = Ar.ReadBytes((int)count);
         return data;
-    }
-
-    private static FUInt24[] ReadSimpleArray24(BinaryReader Ar)
-    {
-        uint count = FModReader.ReadX16(Ar);
-
-        if (count == 0) return [];
-
-        int totalBytes = checked((int)count * 3); // 3 bytes per entry
-        byte[] raw = Ar.ReadBytes(totalBytes);
-
-        if (raw.Length != totalBytes)
-            throw new EndOfStreamException($"Expected {totalBytes} bytes, got {raw.Length}");
-
-        var arr = new FUInt24[count];
-        int o = 0;
-        for (int i = 0; i < count; i++)
-        {
-            uint v = (uint)(raw[o] | (raw[o + 1] << 8) | (raw[o + 2] << 16));
-            o += 3;
-            arr[i] = new FUInt24(v);
-        }
-        return arr;
     }
 
     #endregion

@@ -18,5 +18,10 @@ public class SendEffectNode
         BaseGuid = new FModGuid(Ar);
         ReturnGuid = new FModGuid(Ar);
         SendLevel = Ar.ReadSingle();
+
+        if (FModReader.Version >= 0x3D && FModReader.Version <= 0x91)
+        {
+            bool legacyBypass = Ar.ReadBoolean();
+        }
     }
 }

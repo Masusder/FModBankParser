@@ -26,17 +26,8 @@ public class EnvelopeModulatorNode
             Amount = Ar.ReadSingle();
             ThresholdMinimum = Ar.ReadSingle();
             ThresholdMaximum = Ar.ReadSingle();
-
-            if (FModReader.Version >= 0x53)
-            {
-                AttackTime = Ar.ReadSingle();
-                ReleaseTime = Ar.ReadSingle();
-
-                if (FModReader.Version >= 0x7d)
-                {
-                    UseRMS = Ar.ReadBoolean();
-                }
-            }
+            AttackTime = Ar.ReadSingle();
+            ReleaseTime = Ar.ReadSingle();
         }
         else
         {
@@ -44,7 +35,21 @@ public class EnvelopeModulatorNode
             Maximum = Ar.ReadSingle();
             ThresholdMinimum = Ar.ReadSingle();
             ThresholdMaximum = Ar.ReadSingle();
-            EffectId = new FModGuid(Ar);
+
+            if (FModReader.Version >= 0x53)
+            {
+                AttackTime = Ar.ReadSingle();
+                ReleaseTime = Ar.ReadSingle();
+            }
+            else
+            {
+                EffectId = new FModGuid(Ar);
+            }
+        }
+
+        if (FModReader.Version >= 0x7d)
+        {
+            UseRMS = Ar.ReadBoolean();
         }
     }
 }

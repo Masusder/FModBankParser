@@ -39,12 +39,12 @@ public class ParameterNode
             Velocity = Ar.ReadSingle();
 
             if (FModReader.Version < 0x8f) SeekSpeed = Ar.ReadSingle();
-
-            Labels = FModReader.ReadVersionedElemListImp(Ar, FModReader.ReadString);
         }
 
         Type = type;
 
         if (FModReader.Version >= 0x52 && FModReader.Version <= 0x8E) SeekSpeedDown = Ar.ReadSingle();
+
+        Labels = FModReader.ReadVersionedElemListImp(Ar, FModReader.ReadString);
     }
 }

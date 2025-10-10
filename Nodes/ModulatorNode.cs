@@ -21,7 +21,7 @@ public class ModulatorNode
 
     public ModulatorNode(BinaryReader Ar)
     {
-        Ar.ReadUInt16(); // Unknown
+        Ar.ReadUInt16(); // Payload size
         BaseGuid = new FModGuid(Ar);
         OwnerGuid = new FModGuid(Ar);
 
@@ -63,11 +63,6 @@ public class ModulatorNode
             default:
                 Console.WriteLine($"Unhandled modulator type {Type} ({(int)Type}) at stream position {Ar.BaseStream.Position}");
                 break;
-        }
-
-        if (Subnode is not RandomModulatorNode && Subnode is not LFOModulatorNode)
-        {
-            Ar.ReadBytes(8); // Unknown
         }
     }
 }
