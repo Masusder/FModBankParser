@@ -39,8 +39,6 @@ public class ADSRModulatorNode
             FinalValue = Ar.ReadSingle();
         }
 
-        if (AttackShape > 0) Ar.ReadSingle();
-        if (DecayShape > 0) Ar.ReadSingle();
-        if (ReleaseShape > 0) Ar.ReadSingle();
+        Ar.ReadUInt32(); // ¯\_(ツ)_/¯
     }
 }
