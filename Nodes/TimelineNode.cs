@@ -24,7 +24,7 @@ public class TimelineNode
             TriggerBoxes = FModReader.ReadElemListImp<FTriggerBox>(Ar);
             TimeLockedTriggerBoxes = FModReader.ReadElemListImp<FTriggerBox>(Ar);
 
-            SustainPoints = FModReader.ReadElemListImp<FSustainPoint>(Ar);
+            SustainPoints = FModReader.ReadVersionedElemListImp<FSustainPoint>(Ar);
             TimelineNamedMarkers = FModReader.ReadVersionedElemListImp<FTimelineNamedMarker>(Ar);
             TimelineTempoMarkers = FModReader.ReadElemListImp<FTimelineTempoMarker>(Ar);
         }

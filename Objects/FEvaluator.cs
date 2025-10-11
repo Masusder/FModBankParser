@@ -32,16 +32,15 @@ public readonly struct FEvaluator
                 break;
 
             case EEvaluatorType.Type20:
-                Data = new uint[]
+                Data = new float[]
                 {
-                        Ar.ReadUInt32(),
-                        Ar.ReadUInt32()
+                        Ar.ReadSingle(),
+                        Ar.ReadSingle()
                 }; ;
                 break;
 
             default:
-                Console.WriteLine($"Unknown evaluator type: {Type} (Raw: {rawType})");
-                break;
+                throw new InvalidDataException($"Unknown evaluator type: {Type} (Raw: {rawType})");
         }
     }
 
