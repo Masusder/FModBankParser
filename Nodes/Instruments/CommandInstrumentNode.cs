@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace FModUEParser.Nodes.Instruments;
 
-public class CommandInstrumentNode
+public class CommandInstrumentNode : BaseInstrumentNode
 {
     public readonly FModGuid BaseGuid;
     public readonly uint CommandType;

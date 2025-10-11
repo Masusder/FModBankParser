@@ -11,6 +11,7 @@ public class BaseBusNode
 {
     public readonly FModGuid BaseGuid;
     public readonly FRoutable Routable;
+    public BusNode? BusBody;
 
     public BaseBusNode(BinaryReader Ar)
     {

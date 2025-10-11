@@ -1,11 +1,11 @@
 ﻿
 using Fmod5Sharp.FmodTypes;
 using FModUEParser.Nodes;
+using FModUEParser.Nodes.Instruments;
 using FModUEParser.Objects;
 
 namespace FModUEParser.Extensions;
 
-// TODO: This is just a prototype
 public static class EventNodesResolver
 {
     public static Dictionary<FModGuid, List<FmodSample>> ResolveAudioEvents(FModReader reader)
@@ -55,26 +55,39 @@ public static class EventNodesResolver
             var guid = stack.Pop();
             if (!visited.Add(guid)) continue;
 
-            if (reader.PlaylistNodes.TryGetValue(guid, out var plstNode))
-            {
-                foreach (var plstEntry in plstNode.Entries) stack.Push(plstEntry.Guid);
-            }
-
-            if (reader.InstrumentNodes.TryGetValue(guid, out var instNode)) stack.Push(instNode.TimelineGuid);
-
             if (reader.TimelineNodes.TryGetValue(guid, out var tmlNode2))
             {
                 foreach (var box in tmlNode2.TriggerBoxes) stack.Push(box.Guid);
                 foreach (var box in tmlNode2.TimeLockedTriggerBoxes) stack.Push(box.Guid);
             }
 
-            if (reader.WaveformInstrumentNodes.TryGetValue(guid, out var wavGuid) &&
-                reader.WavEntries.TryGetValue(wavGuid, out var entry) &&
-                reader.SoundBankData.Count > 0 &&
-                entry.SoundBankIndex < reader.SoundBankData[entry.SubsoundIndex].Samples.Count)
+            if (reader.InstrumentNodes.TryGetValue(guid, out var baseInstrNode))
             {
-                result.Add(reader.SoundBankData[entry.SubsoundIndex].Samples[entry.SoundBankIndex]);
-                continue;
+                if (baseInstrNode.InstrumentBody != null)
+                {
+                    stack.Push(baseInstrNode.InstrumentBody.TimelineGuid);
+                }
+
+                if (baseInstrNode is WaveformInstrumentNode wavInstr)
+                {
+                    if (reader.WavEntries.TryGetValue(wavInstr.WaveformResourceGuid, out var entry) &&
+                        reader.SoundBankData.Count > 0 &&
+                        entry.SoundBankIndex < reader.SoundBankData[entry.SubsoundIndex].Samples.Count)
+                    {
+                        result.Add(reader.SoundBankData[entry.SubsoundIndex].Samples[entry.SoundBankIndex]);
+                    }
+                }
+
+                if (baseInstrNode is MultiInstrumentNode multiInst && multiInst.PlaylistBody != null)
+                {
+                    foreach (var plEntry in multiInst.PlaylistBody.Entries)
+                        stack.Push(plEntry.Guid);
+                }
+                else if (baseInstrNode is ScattererInstrumentNode scatterInst && scatterInst.PlaylistBody != null)
+                {
+                    foreach (var plEntry in scatterInst.PlaylistBody.Entries)
+                        stack.Push(plEntry.Guid);
+                }
             }
         }
 

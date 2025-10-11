@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace FModUEParser.Nodes.Instruments;
 
-public class EventInstrumentNode
+public class EventInstrumentNode : BaseInstrumentNode
 {
     public readonly FModGuid BaseGuid;
     public readonly FModGuid EventGuid;

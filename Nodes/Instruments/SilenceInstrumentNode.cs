@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace FModUEParser.Nodes.Instruments;
 
-public class SilenceInstrumentNode
+public class SilenceInstrumentNode : BaseInstrumentNode
 {
     public readonly FModGuid BaseGuid;
     public readonly float Duration;

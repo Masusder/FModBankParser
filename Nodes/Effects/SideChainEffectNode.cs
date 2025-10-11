@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace FModUEParser.Nodes.Effects;
 
-public class SideChainEffectNode
+public class SideChainEffectNode : BaseEffectNode
 {
     public readonly FModGuid BaseGuid;
     public readonly bool IsActive;

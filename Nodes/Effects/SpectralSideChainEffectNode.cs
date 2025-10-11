@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace FModUEParser.Nodes.Effects;
 
-public class SpectralSideChainEffectNode
+public class SpectralSideChainEffectNode : BaseEffectNode
 {
     public readonly FModGuid BaseGuid;
     public readonly float Level;

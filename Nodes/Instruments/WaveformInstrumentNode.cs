@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace FModUEParser.Nodes.Instruments;
 
-public class WaveformInstrumentNode
+public class WaveformInstrumentNode : BaseInstrumentNode
 {
     public readonly FModGuid BaseGuid;
     public readonly FModGuid WaveformResourceGuid;

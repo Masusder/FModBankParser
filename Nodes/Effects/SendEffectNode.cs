@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace FModUEParser.Nodes.Effects;
 
-public class SendEffectNode
+public class SendEffectNode : BaseEffectNode
 {
     public readonly FModGuid BaseGuid;
     public readonly FModGuid ReturnGuid;

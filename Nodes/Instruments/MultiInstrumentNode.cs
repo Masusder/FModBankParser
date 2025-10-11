@@ -7,14 +7,13 @@ using System.Threading.Tasks;
 
 namespace FModUEParser.Nodes.Instruments;
 
-public class ProgrammerInstrumentNode : BaseInstrumentNode
+public class MultiInstrumentNode : BaseInstrumentNode
 {
     public readonly FModGuid BaseGuid;
-    public readonly string Name = string.Empty;
+    public PlaylistNode? PlaylistBody;
 
-    public ProgrammerInstrumentNode(BinaryReader Ar)
+    public MultiInstrumentNode(BinaryReader Ar)
     {
         BaseGuid = new FModGuid(Ar);
-        Name = FModReader.ReadString(Ar);
     }
 }

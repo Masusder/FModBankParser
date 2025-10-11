@@ -8,10 +8,11 @@ using System.Threading.Tasks;
 
 namespace FModUEParser.Nodes.Effects;
 
-public class BuiltInEffectNode
+public class BuiltInEffectNode : BaseEffectNode
 {
     public readonly FModGuid BaseGuid;
     public readonly EDSPType DSPType;
+    public ParameterizedEffectNode? ParamEffectBody;
 
     public BuiltInEffectNode(BinaryReader Ar)
     {

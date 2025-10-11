@@ -24,16 +24,13 @@ public class FModReader
     public List<FmodSoundBank> SoundBankData = [];
 
     public readonly Dictionary<FModGuid, EventNode> EventNodes = [];
-    public readonly Dictionary<FModGuid, BusNode> BusNodes = [];
-    public readonly Dictionary<FModGuid, EffectNode> EffectNodes = [];
-    public readonly Dictionary<FModGuid, CommandInstrumentNode> CommandInstrumentNodes = [];
+    public readonly Dictionary<FModGuid, BaseBusNode> BusNodes = [];
+    public readonly Dictionary<FModGuid, BaseEffectNode> EffectNodes = [];
     public readonly Dictionary<FModGuid, TimelineNode> TimelineNodes = [];
     public readonly Dictionary<FModGuid, TransitionRegionNode> TransitionRegionNodes = [];
     public readonly Dictionary<FModGuid, TransitionTimelineNode> TransitionTimelineNodes = [];
-    public readonly Dictionary<FModGuid, PlaylistNode> PlaylistNodes = [];
-    public readonly Dictionary<FModGuid, InstrumentNode> InstrumentNodes = [];
+    public readonly Dictionary<FModGuid, BaseInstrumentNode> InstrumentNodes = [];
     public readonly Dictionary<FModGuid, WaveformResourceNode> WavEntries = [];
-    public readonly Dictionary<FModGuid, ScattererInstrumentNode> ScattererInstrumentNodes = [];
     public readonly Dictionary<FModGuid, ParameterNode> ParameterNodes = [];
     public readonly Dictionary<FModGuid, ModulatorNode> ModulatorNodes = [];
     public readonly Dictionary<FModGuid, CurveNode> CurveNodes = [];
@@ -43,7 +40,6 @@ public class FModReader
     public readonly Dictionary<FModGuid, ControllerNode> ControllerNodes = [];
     public readonly Dictionary<FModGuid, SnapshotNode> SnapshotNodes = [];
     public readonly Dictionary<FModGuid, VCANode> VCANodes = [];
-    public readonly Dictionary<FModGuid, FModGuid> WaveformInstrumentNodes = [];
 
     public FModReader(BinaryReader Ar)
     {
@@ -51,7 +47,7 @@ public class FModReader
         ParseNodes(Ar, Ar.BaseStream.Position, Ar.BaseStream.Length);
     }
 
-    private void ParseHeader(BinaryReader Ar)
+    private static void ParseHeader(BinaryReader Ar)
     {
         if (Ar.BaseStream.Length < 12)
             throw new Exception("File too small to be a valid RIFF header");
@@ -116,13 +112,19 @@ public class FModReader
                     BankInfo = new FBankInfo(Ar);
                     break;
 
+                case ENodeId.CHUNKID_STRINGDATA:
+                    {
+                        StringTable = new StringTable(Ar);
+                    }
+                    break;
+
                 case ENodeId.CHUNKID_LIST: // List of sub-chunks
-                    var listNodeId = (ENodeId)Ar.ReadInt32();
+                    var listNodeId = (ENodeId)Ar.ReadInt32(); // Not needed; Im using custom structure
                     ParseNodes(Ar, Ar.BaseStream.Position, nextNode);
                     break;
 
                 case ENodeId.CHUNKID_LISTCOUNT:
-                    var listCount = Ar.ReadUInt32();
+                    var listCount = Ar.ReadUInt32(); // Not needed; Im using custom structure
                     break;
 
                 case ENodeId.CHUNKID_RETURNBUSBODY:
@@ -172,12 +174,6 @@ public class FModReader
                     {
                         var node = new ModulatorNode(Ar);
                         ModulatorNodes[node.BaseGuid] = node;
-                    }
-                    break;
-
-                case ENodeId.CHUNKID_STRINGDATA: // String Data Node
-                    {
-                        StringTable = new StringTable(Ar);
                     }
                     break;
 
@@ -330,6 +326,7 @@ public class FModReader
             case ENodeId.CHUNKID_RETURNBUSBODY: // Return Bus Node
                 {
                     var node = new ReturnBusNode(Ar);
+                    BusNodes[node.BaseGuid] = node;
                     parentStack.Push(new FParentContext(nodeId, node.BaseGuid)); // Points to bus node
                 }
                 break;
@@ -337,6 +334,7 @@ public class FModReader
             case ENodeId.CHUNKID_INPUTBUSBODY: // Input Bus Node
                 {
                     var node = new InputBusNode(Ar);
+                    BusNodes[node.BaseGuid] = node;
                     parentStack.Push(new FParentContext(nodeId, node.BaseGuid)); // Points to bus node
                 }
                 break;
@@ -344,6 +342,7 @@ public class FModReader
             case ENodeId.CHUNKID_GROUPBUSBODY: // Group Bus Node
                 {
                     var node = new GroupBusNode(Ar);
+                    BusNodes[node.BaseGuid] = node;
                     parentStack.Push(new FParentContext(nodeId, node.BaseGuid)); // Points to bus node
                 }
                 break;
@@ -351,19 +350,22 @@ public class FModReader
             case ENodeId.CHUNKID_MASTERBUSBODY: // Master Bus Node
                 {
                     var node = new MasterBusNode(Ar);
+                    BusNodes[node.BaseGuid] = node;
                     parentStack.Push(new FParentContext(nodeId, node.BaseGuid)); // Points to bus node
                 }
                 break;
 
             case ENodeId.CHUNKID_BUS: // Bus Node
                 if (parentStack.TryPeek(out var busParent) &&
-                    (busParent.NodeId == ENodeId.CHUNKID_INPUTBUSBODY ||
-                    busParent.NodeId == ENodeId.CHUNKID_GROUPBUSBODY ||
-                    busParent.NodeId == ENodeId.CHUNKID_MASTERBUSBODY ||
-                    busParent.NodeId == ENodeId.CHUNKID_RETURNBUSBODY))
+                    busParent.NodeId is ENodeId.CHUNKID_INPUTBUSBODY or
+                        ENodeId.CHUNKID_GROUPBUSBODY or
+                        ENodeId.CHUNKID_MASTERBUSBODY or
+                        ENodeId.CHUNKID_RETURNBUSBODY)
                 {
                     var node = new BusNode(Ar);
-                    BusNodes[busParent.Guid] = node;
+                    if (BusNodes.TryGetValue(busParent.Guid, out var baseBus))
+                        baseBus.BusBody = node;
+
                     parentStack.Pop();
                 }
                 break;
@@ -374,51 +376,71 @@ public class FModReader
     {
         switch (nodeId)
         {
-            case ENodeId.CHUNKID_SPECTRALSIDECHAINEFFECT:
-                {
-                    var node = new SpectralSideChainEffectNode(Ar);
-                    parentStack.Push(new FParentContext(nodeId, node.BaseGuid)); // Points to effect node
-                    break;
-                }
             case ENodeId.CHUNKID_BUILTINEFFECTBODY:
                 {
                     var node = new BuiltInEffectNode(Ar);
+                    EffectNodes[node.BaseGuid] = node;
                     parentStack.Push(new FParentContext(nodeId, node.BaseGuid)); // Points to parameterized effect node
                     break;
                 }
-            case ENodeId.CHUNKID_SENDEFFECTBODY:
-                {
-                    var node = new SendEffectNode(Ar);
-                    parentStack.Push(new FParentContext(nodeId, node.BaseGuid)); // Points to effect node
-                    break;
-                }
-            case ENodeId.CHUNKID_SIDECHAINEFFECT:
-                {
-                    var node = new SideChainEffectNode(Ar);
-                    parentStack.Push(new FParentContext(nodeId, node.BaseGuid)); // Points to effect node
-                    break;
-                }
+
             case ENodeId.CHUNKID_PARAMETERIZEDEFFECT:
                 {
                     if (parentStack.TryPeek(out var paramEffectParent) &&
-                        paramEffectParent.NodeId == ENodeId.CHUNKID_BUILTINEFFECTBODY)
+                        paramEffectParent.NodeId is ENodeId.CHUNKID_BUILTINEFFECTBODY)
                     {
                         var node = new ParameterizedEffectNode(Ar);
+                        if (EffectNodes.TryGetValue(paramEffectParent.Guid, out var builtInEffectNodeObj))
+                        {
+                            if (builtInEffectNodeObj is BuiltInEffectNode builtInEffectNode)
+                            {
+                                builtInEffectNode.ParamEffectBody = node;
+                            }
+                        }
+
                         parentStack.Pop();
                         parentStack.Push(new FParentContext(nodeId, paramEffectParent.Guid)); // Points to effect node
                     }
                     break;
                 }
+
+            case ENodeId.CHUNKID_SPECTRALSIDECHAINEFFECT:
+                {
+                    var node = new SpectralSideChainEffectNode(Ar);
+                    EffectNodes[node.BaseGuid] = node;
+                    parentStack.Push(new FParentContext(nodeId, node.BaseGuid)); // Points to effect node
+                    break;
+                }
+
+            case ENodeId.CHUNKID_SENDEFFECTBODY:
+                {
+                    var node = new SendEffectNode(Ar);
+                    EffectNodes[node.BaseGuid] = node;
+                    parentStack.Push(new FParentContext(nodeId, node.BaseGuid)); // Points to effect node
+                    break;
+                }
+
+            case ENodeId.CHUNKID_SIDECHAINEFFECT:
+                {
+                    var node = new SideChainEffectNode(Ar);
+                    EffectNodes[node.BaseGuid] = node;
+                    parentStack.Push(new FParentContext(nodeId, node.BaseGuid)); // Points to effect node
+                    break;
+                }
+
             case ENodeId.CHUNKID_EFFECTBODY:
                 {
                     if (parentStack.TryPeek(out var effectParent) &&
-                        (effectParent.NodeId == ENodeId.CHUNKID_PARAMETERIZEDEFFECT ||
-                         effectParent.NodeId == ENodeId.CHUNKID_SENDEFFECTBODY ||
-                         effectParent.NodeId == ENodeId.CHUNKID_SIDECHAINEFFECT ||
-                         effectParent.NodeId == ENodeId.CHUNKID_SPECTRALSIDECHAINEFFECT))
+                        effectParent.NodeId is ENodeId.CHUNKID_SENDEFFECTBODY or
+                            ENodeId.CHUNKID_SIDECHAINEFFECT or
+                            ENodeId.CHUNKID_SPECTRALSIDECHAINEFFECT or
+                            ENodeId.CHUNKID_PARAMETERIZEDEFFECT)
                     {
                         var node = new EffectNode(Ar);
-                        EffectNodes[effectParent.Guid] = node;
+                        if (EffectNodes.TryGetValue(effectParent.Guid, out var effectNode))
+                            effectNode.EffectBody = node;
+
+                        parentStack.Pop();
                     }
                     break;
                 }
@@ -432,21 +454,35 @@ public class FModReader
             case ENodeId.CHUNKID_SCATTERERINSTRUMENTBODY: // Scatterer Instrument Node
                 {
                     var node = new ScattererInstrumentNode(Ar);
-                    ScattererInstrumentNodes[node.BaseGuid] = node;
+                    InstrumentNodes[node.BaseGuid] = node;
                     parentStack.Push(new FParentContext(nodeId, node.BaseGuid)); // Points to playlist node
                 }
                 break;
 
             case ENodeId.CHUNKID_MULTIINSTRUMENTBODY: // Multi Instrument Node
-                parentStack.Push(new FParentContext(nodeId, new FModGuid(Ar))); // Points to playlist node
+                {
+                    var node = new MultiInstrumentNode(Ar);
+                    InstrumentNodes[node.BaseGuid] = node;
+                    parentStack.Push(new FParentContext(nodeId, node.BaseGuid)); // Points to playlist node
+                }
                 break;
 
             case ENodeId.CHUNKID_PLAYLIST: // Playlist Node
                 if (parentStack.TryPeek(out var parentPlst) &&
-                    (parentPlst.NodeId == ENodeId.CHUNKID_SCATTERERINSTRUMENTBODY ||
-                     parentPlst.NodeId == ENodeId.CHUNKID_MULTIINSTRUMENTBODY))
+                    (parentPlst.NodeId is ENodeId.CHUNKID_SCATTERERINSTRUMENTBODY or ENodeId.CHUNKID_MULTIINSTRUMENTBODY))
                 {
-                    PlaylistNodes[parentPlst.Guid] = new PlaylistNode(Ar);
+                    var node = new PlaylistNode(Ar);
+                    if (InstrumentNodes.TryGetValue(parentPlst.Guid, out var parentNodeObj))
+                    {
+                        if (parentNodeObj is ScattererInstrumentNode scatterer)
+                        {
+                            scatterer.PlaylistBody = node;
+                        }
+                        else if (parentNodeObj is MultiInstrumentNode multi)
+                        {
+                            multi.PlaylistBody = node;
+                        }
+                    }
                     parentStack.Pop();
                     parentStack.Push(new FParentContext(nodeId, parentPlst.Guid)); // Points to instrument node
                 }
@@ -455,6 +491,7 @@ public class FModReader
             case ENodeId.CHUNKID_PROGRAMMERINSTRUMENTBODY: // Programmer Instrument Node
                 {
                     var node = new ProgrammerInstrumentNode(Ar);
+                    InstrumentNodes[node.BaseGuid] = node;
                     parentStack.Push(new FParentContext(nodeId, node.BaseGuid)); // Points to instrument node
                 }
                 break;
@@ -462,7 +499,7 @@ public class FModReader
             case ENodeId.CHUNKID_COMMANDINSTRUMENTBODY: // Command Instrument Node
                 {
                     var node = new CommandInstrumentNode(Ar);
-                    CommandInstrumentNodes[node.BaseGuid] = node;
+                    InstrumentNodes[node.BaseGuid] = node;
                     parentStack.Push(new FParentContext(nodeId, node.BaseGuid)); // Points to instrument node
                 }
                 break;
@@ -470,7 +507,7 @@ public class FModReader
             case ENodeId.CHUNKID_WAVEFORMINSTRUMENTBODY: // Waveform Instrument Node
                 {
                     var node = new WaveformInstrumentNode(Ar);
-                    WaveformInstrumentNodes[node.BaseGuid] = node.WaveformResourceGuid;
+                    InstrumentNodes[node.BaseGuid] = node;
                     parentStack.Push(new FParentContext(nodeId, node.BaseGuid)); // Points to instrument node
                 }
                 break;
@@ -478,6 +515,7 @@ public class FModReader
             case ENodeId.CHUNKID_EVENTINSTRUMENTBODY: // Event Instrument Node
                 {
                     var node = new EventInstrumentNode(Ar);
+                    InstrumentNodes[node.BaseGuid] = node;
                     parentStack.Push(new FParentContext(nodeId, node.BaseGuid)); // Points to instrument node
                 }
                 break;
@@ -485,21 +523,25 @@ public class FModReader
             case ENodeId.CHUNKID_SILENCEINSTRUMENTBODY: // Silence Instrument Node
                 {
                     var node = new SilenceInstrumentNode(Ar);
+                    InstrumentNodes[node.BaseGuid] = node;
                     parentStack.Push(new FParentContext(nodeId, node.BaseGuid)); // Points to instrument node
                 }
                 break;
 
             case ENodeId.CHUNKID_INSTRUMENT: // Instrument Node
                 if (parentStack.TryPeek(out var parentInst) &&
-                    (parentInst.NodeId == ENodeId.CHUNKID_PROGRAMMERINSTRUMENTBODY ||
-                     parentInst.NodeId == ENodeId.CHUNKID_COMMANDINSTRUMENTBODY ||
-                     parentInst.NodeId == ENodeId.CHUNKID_WAVEFORMINSTRUMENTBODY ||
-                     parentInst.NodeId == ENodeId.CHUNKID_EVENTINSTRUMENTBODY ||
-                     parentInst.NodeId == ENodeId.CHUNKID_SILENCEINSTRUMENTBODY ||
-                     parentInst.NodeId == ENodeId.CHUNKID_PLAYLIST))
+                    (parentInst.NodeId is ENodeId.CHUNKID_PROGRAMMERINSTRUMENTBODY or
+                        ENodeId.CHUNKID_COMMANDINSTRUMENTBODY or
+                        ENodeId.CHUNKID_WAVEFORMINSTRUMENTBODY or
+                        ENodeId.CHUNKID_EVENTINSTRUMENTBODY or
+                        ENodeId.CHUNKID_SILENCEINSTRUMENTBODY or
+                        ENodeId.CHUNKID_PLAYLIST))
                 {
                     var node = new InstrumentNode(Ar);
-                    InstrumentNodes[parentInst.Guid] = node;
+                    if (InstrumentNodes.TryGetValue(parentInst.Guid, out var instNode))
+                        instNode.InstrumentBody = node;
+
+                    parentStack.Pop();
                 }
                 break;
         }
