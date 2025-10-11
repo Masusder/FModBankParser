@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FModUEParser.Nodes;
+namespace FModUEParser.Nodes.Transitions;
 
 public class TransitionTimelineNode
 {

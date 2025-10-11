@@ -6,9 +6,9 @@ using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FModUEParser.Nodes;
+namespace FModUEParser.Nodes.Transitions;
 
-public class TransitionRegionNode
+public class TransitionRegionNode : BaseTransitionNode
 {
     public readonly FModGuid BaseGuid;
     public readonly FModGuid DestinationGuid;

@@ -5,6 +5,7 @@ using FModUEParser.Nodes;
 using FModUEParser.Nodes.Buses;
 using FModUEParser.Nodes.Effects;
 using FModUEParser.Nodes.Instruments;
+using FModUEParser.Nodes.Transitions;
 using FModUEParser.Objects;
 using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
@@ -27,8 +28,7 @@ public class FModReader
     public readonly Dictionary<FModGuid, BaseBusNode> BusNodes = [];
     public readonly Dictionary<FModGuid, BaseEffectNode> EffectNodes = [];
     public readonly Dictionary<FModGuid, TimelineNode> TimelineNodes = [];
-    public readonly Dictionary<FModGuid, TransitionRegionNode> TransitionRegionNodes = [];
-    public readonly Dictionary<FModGuid, TransitionTimelineNode> TransitionTimelineNodes = [];
+    public readonly Dictionary<FModGuid, BaseTransitionNode> TransitionNodes = [];
     public readonly Dictionary<FModGuid, BaseInstrumentNode> InstrumentNodes = [];
     public readonly Dictionary<FModGuid, WaveformResourceNode> WavEntries = [];
     public readonly Dictionary<FModGuid, ParameterNode> ParameterNodes = [];
@@ -156,6 +156,11 @@ public class FModReader
                     ParseInstrumentNodes(Ar, nodeId, parentStack);
                     break;
 
+                case ENodeId.CHUNKID_TRANSITIONREGIONBODY:
+                case ENodeId.CHUNKID_TRANSITIONTIMELINE:
+                    ParseTransitionNodes(Ar, nodeId, parentStack);
+                    break;
+
                 case ENodeId.CHUNKID_PROPERTY: // Property Node
                     {
                         var node = new PropertyNode(Ar);
@@ -202,24 +207,6 @@ public class FModReader
                     {
                         var node = new TimelineNode(Ar);
                         TimelineNodes[node.BaseGuid] = node;
-                    }
-                    break;
-
-                case ENodeId.CHUNKID_TRANSITIONREGIONBODY: // Transition Region Node
-                    {
-                        var node = new TransitionRegionNode(Ar);
-                        TransitionRegionNodes[node.BaseGuid] = node;
-                        parentStack.Push(new FParentContext(nodeId, node.BaseGuid)); // Points to transition timeline node
-                    }
-                    break;
-
-                case ENodeId.CHUNKID_TRANSITIONTIMELINE: // Transition Timeline Node
-                    if (parentStack.TryPeek(out var transParent) &&
-                        transParent.NodeId == ENodeId.CHUNKID_TRANSITIONREGIONBODY)
-                    {
-                        var node = new TransitionTimelineNode(Ar);
-                        TransitionTimelineNodes[transParent.Guid] = node;
-                        parentStack.Pop();
                     }
                     break;
 
@@ -540,6 +527,32 @@ public class FModReader
                     var node = new InstrumentNode(Ar);
                     if (InstrumentNodes.TryGetValue(parentInst.Guid, out var instNode))
                         instNode.InstrumentBody = node;
+
+                    parentStack.Pop();
+                }
+                break;
+        }
+    }
+
+    private void ParseTransitionNodes(BinaryReader Ar, ENodeId nodeId, Stack<FParentContext> parentStack)
+    {
+        switch (nodeId)
+        {
+            case ENodeId.CHUNKID_TRANSITIONREGIONBODY: // Transition Region Node
+                {
+                    var node = new TransitionRegionNode(Ar);
+                    TransitionNodes[node.DestinationGuid] = node;
+                    parentStack.Push(new FParentContext(nodeId, node.DestinationGuid)); // Points to transition timeline node
+                }
+                break;
+
+            case ENodeId.CHUNKID_TRANSITIONTIMELINE: // Transition Timeline Node
+                if (parentStack.TryPeek(out var transParent) &&
+                    transParent.NodeId is ENodeId.CHUNKID_TRANSITIONREGIONBODY)
+                {
+                    var node = new TransitionTimelineNode(Ar);
+                    if (TransitionNodes.TryGetValue(transParent.Guid, out var transNode))
+                        transNode.TransitionBody = node;
 
                     parentStack.Pop();
                 }

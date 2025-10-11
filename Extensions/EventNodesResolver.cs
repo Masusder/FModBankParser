@@ -30,6 +30,8 @@ public static class EventNodesResolver
         {
             foreach (var box in tmlNode.TriggerBoxes) stack.Push(box.Guid);
             foreach (var box in tmlNode.TimeLockedTriggerBoxes) stack.Push(box.Guid);
+            foreach (var marker in tmlNode.TimelineNamedMarkers) stack.Push(marker.BaseGuid);
+            foreach (var marker in tmlNode.TimelineTempoMarkers) stack.Push(marker.BaseGuid);
         }
         else
         {
@@ -59,6 +61,17 @@ public static class EventNodesResolver
             {
                 foreach (var box in tmlNode2.TriggerBoxes) stack.Push(box.Guid);
                 foreach (var box in tmlNode2.TimeLockedTriggerBoxes) stack.Push(box.Guid);
+            }
+
+            if (reader.TransitionNodes.TryGetValue(guid, out var transTimeline))
+            {
+                if (transTimeline.TransitionBody != null)
+                {
+                    foreach (var box in transTimeline.TransitionBody.FadeOverrides) stack.Push(box.CurveGuid);
+                    foreach (var box in transTimeline.TransitionBody.FadeOverrides) stack.Push(box.ControllerGuid);
+                    foreach (var box in transTimeline.TransitionBody.TriggeredTriggerBoxes) stack.Push(box.Guid);
+                    foreach (var box in transTimeline.TransitionBody.TimeLockedTriggerBoxes) stack.Push(box.Guid);
+                }
             }
 
             if (reader.InstrumentNodes.TryGetValue(guid, out var baseInstrNode))

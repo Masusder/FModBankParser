@@ -27,7 +27,7 @@ public class FModUEParser
             var mergedReaders = FModBankMerger.MergeBanks(fmodPath);
 
             //var stringData = mergedReaders
-            //    .Select(r => r.StringData?.RadixTree)
+            //    .Select(r => r.StringTable?.RadixTree)
             //    .FirstOrDefault(tree => tree != null);
 
             foreach (var fmodReader in mergedReaders)
