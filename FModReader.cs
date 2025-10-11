@@ -141,6 +141,7 @@ public class FModReader
                 case ENodeId.CHUNKID_SIDECHAINEFFECT:
                 case ENodeId.CHUNKID_PARAMETERIZEDEFFECT:
                 case ENodeId.CHUNKID_EFFECTBODY:
+                case ENodeId.CHUNKID_PLUGINEFFECTBODY:
                     ParseEffectNodes(Ar, nodeId, parentStack);
                     break;
 
@@ -153,6 +154,7 @@ public class FModReader
                 case ENodeId.CHUNKID_EVENTINSTRUMENTBODY:
                 case ENodeId.CHUNKID_SILENCEINSTRUMENTBODY:
                 case ENodeId.CHUNKID_INSTRUMENT:
+                case ENodeId.CHUNKID_EFFECTINSTRUMENTBODY:
                     ParseInstrumentNodes(Ar, nodeId, parentStack);
                     break;
 
@@ -371,10 +373,19 @@ public class FModReader
                     break;
                 }
 
+            case ENodeId.CHUNKID_PLUGINEFFECTBODY:
+                {
+                    var node = new PluginEffectNode(Ar);
+                    EffectNodes[node.BaseGuid] = node;
+                    parentStack.Push(new FParentContext(nodeId, node.BaseGuid)); // Points to parameterized effect node
+                    break;
+                }
+
             case ENodeId.CHUNKID_PARAMETERIZEDEFFECT:
                 {
                     if (parentStack.TryPeek(out var paramEffectParent) &&
-                        paramEffectParent.NodeId is ENodeId.CHUNKID_BUILTINEFFECTBODY)
+                        paramEffectParent.NodeId is ENodeId.CHUNKID_BUILTINEFFECTBODY or
+                            ENodeId.CHUNKID_PLUGINEFFECTBODY)
                     {
                         var node = new ParameterizedEffectNode(Ar);
                         if (EffectNodes.TryGetValue(paramEffectParent.Guid, out var builtInEffectNodeObj))
@@ -382,6 +393,10 @@ public class FModReader
                             if (builtInEffectNodeObj is BuiltInEffectNode builtInEffectNode)
                             {
                                 builtInEffectNode.ParamEffectBody = node;
+                            }
+                            else if (builtInEffectNodeObj is PluginEffectNode pluginEffectNode)
+                            {
+                                pluginEffectNode.ParamEffectBody = node;
                             }
                         }
 
@@ -515,6 +530,14 @@ public class FModReader
                 }
                 break;
 
+            case ENodeId.CHUNKID_EFFECTINSTRUMENTBODY: // Effect Instrument Node
+                {
+                    var node = new EffectInstrumentNode(Ar);
+                    InstrumentNodes[node.BaseGuid] = node;
+                    parentStack.Push(new FParentContext(nodeId, node.BaseGuid)); // Points to instrument node
+                }
+                break;
+
             case ENodeId.CHUNKID_INSTRUMENT: // Instrument Node
                 if (parentStack.TryPeek(out var parentInst) &&
                     (parentInst.NodeId is ENodeId.CHUNKID_PROGRAMMERINSTRUMENTBODY or
@@ -522,7 +545,8 @@ public class FModReader
                         ENodeId.CHUNKID_WAVEFORMINSTRUMENTBODY or
                         ENodeId.CHUNKID_EVENTINSTRUMENTBODY or
                         ENodeId.CHUNKID_SILENCEINSTRUMENTBODY or
-                        ENodeId.CHUNKID_PLAYLIST))
+                        ENodeId.CHUNKID_PLAYLIST or
+                        ENodeId.CHUNKID_EFFECTINSTRUMENTBODY))
                 {
                     var node = new InstrumentNode(Ar);
                     if (InstrumentNodes.TryGetValue(parentInst.Guid, out var instNode))

@@ -60,6 +60,8 @@ public static class EventNodesResolver
             {
                 foreach (var box in tmlNode2.TriggerBoxes) stack.Push(box.Guid);
                 foreach (var box in tmlNode2.TimeLockedTriggerBoxes) stack.Push(box.Guid);
+                foreach (var namedMarker in tmlNode2.TimelineNamedMarkers) stack.Push(namedMarker.BaseGuid);
+                foreach (var tempoMarker in tmlNode2.TimelineTempoMarkers) stack.Push(tempoMarker.BaseGuid);
             }
 
             if (reader.TransitionNodes.TryGetValue(guid, out var transTimeline))

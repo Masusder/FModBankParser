@@ -22,19 +22,26 @@ public class SoundDataNode
 
         byte[] fsbBytes = sndChunk[relativeOffset..];
 
-        if (FsbLoader.TryLoadFsbFromByteArray(fsbBytes, out var bank) && bank != null)
+        try
         {
-            SoundBank = bank;
-            Console.WriteLine($"FSB5 parsed successfully, samples: {bank.Samples.Count}");
-            for (int i = 0; i < bank.Samples.Count; i++)
+            if (FsbLoader.TryLoadFsbFromByteArray(fsbBytes, out var bank) && bank != null)
             {
-                var sample = bank.Samples[i];
-                //Console.WriteLine($"Sample: {sample.Name}, Index: {i}");
+                SoundBank = bank;
+                Console.WriteLine($"FSB5 parsed successfully, samples: {bank.Samples.Count}");
+                for (int i = 0; i < bank.Samples.Count; i++)
+                {
+                    var sample = bank.Samples[i];
+                    //Console.WriteLine($"Sample: {sample.Name}, Index: {i}");
+                }
+            }
+            else
+            {
+                Console.WriteLine($"Failed to parse FSB5 at {fsbOffset}");
             }
         }
-        else
+        catch (Exception ex)
         {
-            Console.WriteLine($"Failed to parse FSB5 at {fsbOffset}");
+            Console.WriteLine($"Exception thrown while parsing FSB5 at {fsbOffset}: {ex.Message}");
         }
     }
 }
