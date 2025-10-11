@@ -36,10 +36,9 @@ public class ModulatorNode
         else
         {
             PropertyType = (EPropertyType)Ar.ReadInt32();
-            ClockSource = EClockSource.ClockSource_Local;
+            ClockSource = FModReader.Version >= 0x90 ? (EClockSource)Ar.ReadInt32() : EClockSource.ClockSource_Local;
         }
 
-        // TODO: something is still off
         switch (Type)
         {
             case EModulatorType.ADSR:
