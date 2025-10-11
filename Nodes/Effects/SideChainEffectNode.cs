@@ -21,6 +21,6 @@ public class SideChainEffectNode : BaseEffectNode
         IsActive = Ar.ReadBoolean();
         Targets = FModReader.ReadElemListImp<FModGuid>(Ar);
         Modulators = FModReader.ReadElemListImp<FModGuid>(Ar);
-        SideChainLevel = Ar.ReadSingle();
+        if (FModReader.Version >= 0x88) SideChainLevel = Ar.ReadSingle();
     }
 }

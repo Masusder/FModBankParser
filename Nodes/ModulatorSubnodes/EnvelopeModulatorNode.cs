@@ -9,7 +9,7 @@ namespace FModUEParser.Nodes.ModulatorSubnodes;
 
 public class EnvelopeModulatorNode
 {
-    public readonly float Amount;
+    public readonly float? Amount;
     public readonly float ThresholdMinimum;
     public readonly float ThresholdMaximum;
     public readonly float? AttackTime;
@@ -24,32 +24,29 @@ public class EnvelopeModulatorNode
         if (FModReader.Version >= 0x55)
         {
             Amount = Ar.ReadSingle();
-            ThresholdMinimum = Ar.ReadSingle();
-            ThresholdMaximum = Ar.ReadSingle();
-            AttackTime = Ar.ReadSingle();
-            ReleaseTime = Ar.ReadSingle();
         }
         else
         {
             Minimum = Ar.ReadSingle();
             Maximum = Ar.ReadSingle();
-            ThresholdMinimum = Ar.ReadSingle();
-            ThresholdMaximum = Ar.ReadSingle();
-
-            if (FModReader.Version >= 0x53)
-            {
-                AttackTime = Ar.ReadSingle();
-                ReleaseTime = Ar.ReadSingle();
-            }
-            else
-            {
-                EffectId = new FModGuid(Ar);
-            }
         }
 
-        if (FModReader.Version >= 0x7d)
+        ThresholdMinimum = Ar.ReadSingle();
+        ThresholdMaximum = Ar.ReadSingle();
+
+        if (FModReader.Version >= 0x53)
         {
-            UseRMS = Ar.ReadBoolean();
+            AttackTime = Ar.ReadSingle();
+            ReleaseTime = Ar.ReadSingle();
+
+            if (FModReader.Version >= 0x7d)
+            {
+                UseRMS = Ar.ReadBoolean();
+            }
+        }
+        else
+        {
+            EffectId = new FModGuid(Ar);
         }
     }
 }

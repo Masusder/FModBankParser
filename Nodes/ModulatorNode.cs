@@ -35,7 +35,7 @@ public class ModulatorNode
         }
         else
         {
-            PropertyType = EPropertyType.PropertyType_Normal;
+            PropertyType = (EPropertyType)Ar.ReadInt32();
             ClockSource = EClockSource.ClockSource_Local;
         }
 

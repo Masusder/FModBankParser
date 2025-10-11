@@ -113,9 +113,7 @@ public class FModReader
                     break;
 
                 case ENodeId.CHUNKID_STRINGDATA:
-                    {
-                        StringTable = new StringTable(Ar);
-                    }
+                    StringTable = new StringTable(Ar);
                     break;
 
                 case ENodeId.CHUNKID_LIST: // List of sub-chunks

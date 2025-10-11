@@ -38,7 +38,5 @@ public class ADSRModulatorNode
         {
             FinalValue = Ar.ReadSingle();
         }
-
-        Ar.ReadUInt32(); // ¯\_(ツ)_/¯
     }
 }

@@ -24,7 +24,5 @@ public class LFOModulatorNode
         Amount = Ar.ReadSingle();     // 0x5C
         Phase = Ar.ReadSingle();      // 0x60
         Direction = Ar.ReadSingle();  // 0x64
-
-        Ar.ReadUInt32(); // ¯\_(ツ)_/¯
     }
 }
