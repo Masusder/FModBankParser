@@ -30,18 +30,17 @@ public static class EventNodesResolver
         {
             foreach (var box in tmlNode.TriggerBoxes) stack.Push(box.Guid);
             foreach (var box in tmlNode.TimeLockedTriggerBoxes) stack.Push(box.Guid);
-            foreach (var marker in tmlNode.TimelineNamedMarkers) stack.Push(marker.BaseGuid);
-            foreach (var marker in tmlNode.TimelineTempoMarkers) stack.Push(marker.BaseGuid);
+            foreach (var namedMarker in tmlNode.TimelineNamedMarkers) stack.Push(namedMarker.BaseGuid);
+            foreach (var tempoMarker in tmlNode.TimelineTempoMarkers) stack.Push(tempoMarker.BaseGuid);
         }
         else
         {
             stack.Push(evNode.TimelineGuid);
         }
 
-        foreach (var param in evNode.ParameterLayouts) stack.Push(param);
-
         foreach (var paramGuid in evNode.ParameterLayouts)
         {
+            stack.Push(paramGuid);
             if (reader.ParameterLayoutNodes.TryGetValue(paramGuid, out var paramLayoutNode))
             {
                 foreach (var instGuid in paramLayoutNode.Instruments) stack.Push(instGuid);
@@ -67,8 +66,12 @@ public static class EventNodesResolver
             {
                 if (transTimeline.TransitionBody != null)
                 {
-                    foreach (var box in transTimeline.TransitionBody.FadeOverrides) stack.Push(box.CurveGuid);
-                    foreach (var box in transTimeline.TransitionBody.FadeOverrides) stack.Push(box.ControllerGuid);
+                    foreach (var fade in transTimeline.TransitionBody.FadeOverrides)
+                    {
+                        stack.Push(fade.CurveGuid);
+                        stack.Push(fade.ControllerGuid);
+                    }
+
                     foreach (var box in transTimeline.TransitionBody.TriggeredTriggerBoxes) stack.Push(box.Guid);
                     foreach (var box in transTimeline.TransitionBody.TimeLockedTriggerBoxes) stack.Push(box.Guid);
                 }
