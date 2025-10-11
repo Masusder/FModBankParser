@@ -22,7 +22,6 @@ public class ParameterNode
     public readonly float SeekSpeedDown;
     public readonly string[] Labels = [];
 
-    // TODO: fix versioning
     public ParameterNode(BinaryReader Ar)
     {
         BaseGuid = new FModGuid(Ar);
@@ -46,6 +45,6 @@ public class ParameterNode
 
         if (FModReader.Version >= 0x52 && FModReader.Version <= 0x8E) SeekSpeedDown = Ar.ReadSingle();
 
-        //Labels = FModReader.ReadVersionedElemListImp(Ar, FModReader.ReadString);
+        Labels = FModReader.Version >= 0x8b ? FModReader.ReadVersionedElemListImp(Ar, FModReader.ReadString) : [];
     }
 }
