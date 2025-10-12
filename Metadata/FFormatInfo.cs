@@ -14,6 +14,7 @@ public readonly struct FFormatInfo
     public FFormatInfo(BinaryReader Ar)
     {
         FileVersion = Ar.ReadInt32();
+        Console.WriteLine($"Soundbank version: 0x{FileVersion:X}");
         CompatVersion = Ar.ReadInt32();
     }
 }

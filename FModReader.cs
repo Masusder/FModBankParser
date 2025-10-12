@@ -20,7 +20,9 @@ public class FModReader
     public static FFormatInfo FormatInfo;
     public static SoundDataInfo? SoundDataInfo;
     public StringTable? StringTable;
+    public SoundTable? SoundTable;
     public FBankInfo? BankInfo;
+    public FModGuid? PlatformInfo;
     public FHashInfo[] HashData = [];
     public List<FmodSoundBank> SoundBankData = [];
 
@@ -40,6 +42,7 @@ public class FModReader
     public readonly Dictionary<FModGuid, ControllerNode> ControllerNodes = [];
     public readonly Dictionary<FModGuid, SnapshotNode> SnapshotNodes = [];
     public readonly Dictionary<FModGuid, VCANode> VCANodes = [];
+    public readonly List<FModGuid> ControllerOwnerNodes = [];
 
     public FModReader(BinaryReader Ar)
     {
@@ -114,6 +117,18 @@ public class FModReader
 
                 case ENodeId.CHUNKID_STRINGDATA:
                     StringTable = new StringTable(Ar);
+                    break;
+
+                case ENodeId.CHUNKID_SOUNDTABLE:
+                    SoundTable = new SoundTable(Ar);
+                    break;
+
+                case ENodeId.CHUNKID_HASHDATA:
+                    HashData = new HashData(Ar);
+                    break;
+
+                case ENodeId.CHUNKID_PLATFORM_INFO:
+                    PlatformInfo = new FModGuid(Ar);
                     break;
 
                 case ENodeId.CHUNKID_LIST: // List of sub-chunks
@@ -224,12 +239,6 @@ public class FModReader
                     }
                     break;
 
-                case ENodeId.CHUNKID_HASHDATA: // Hash Node
-                    {
-                        HashData = new HashDataNode(Ar).HashData;
-                    }
-                    break;
-
                 case ENodeId.CHUNKID_CURVE: // Curve Node
                     {
                         var node = new CurveNode(Ar);
@@ -239,7 +248,8 @@ public class FModReader
 
                 case ENodeId.CHUNKID_CONTROLLEROWNER: // Controller Owner Node
                     {
-                        _ = new ControllerOwnerNode(Ar);
+                        var node = new ControllerOwnerNode(Ar);
+                        ControllerOwnerNodes.AddRange(node.Controllers);
                     }
                     break;
 
@@ -257,22 +267,8 @@ public class FModReader
                     }
                     break;
 
-                case ENodeId.CHUNKID_PLATFORM_INFO: // Platform Info Node
-                    {
-                        _ = new FModGuid(Ar);
-                    }
-                    break;
-
-                case ENodeId.CHUNKID_SOUNDTABLE: // Sound Table Node
-                    {
-                        _ = new SoundTable(Ar);
-                    }
-                    break;
-
-                case ENodeId.CHUNKID_SOUNDDATAHEADER: // Sound Data Header Node
-                    {
-                        SoundDataInfo = new SoundDataInfo(Ar);
-                    }
+                case ENodeId.CHUNKID_SOUNDDATAHEADER: // Sound Data Header
+                    SoundDataInfo = new SoundDataInfo(Ar);
                     break;
 
                 case ENodeId.CHUNKID_SOUNDDATA: // Sound Data Node

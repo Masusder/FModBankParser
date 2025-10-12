@@ -22,12 +22,13 @@ public static class FModBankMerger
         var mergedReaders = new List<FModReader>();
         foreach (var baseName in baseNames)
         {
-            var variants = new[]
+            var variants = files.Where(f =>
             {
-                Path.Combine(folderPath, baseName + ".bank"),
-                Path.Combine(folderPath, baseName + ".assets.bank"),
-                Path.Combine(folderPath, baseName + ".streams.bank"),
-            };
+                var fn = Path.GetFileName(f);
+                return fn.Equals(baseName + ".bank", StringComparison.OrdinalIgnoreCase)
+                    || fn.Equals(baseName + ".assets.bank", StringComparison.OrdinalIgnoreCase)
+                    || fn.Equals(baseName + ".streams.bank", StringComparison.OrdinalIgnoreCase);
+            }).ToArray();
 
             FModReader? merged = null;
             foreach (var file in variants.Where(File.Exists))
@@ -54,7 +55,10 @@ public static class FModBankMerger
     private static void MergeInto(FModReader dest, FModReader src)
     {
         foreach (var kv in src.EventNodes) dest.EventNodes[kv.Key] = kv.Value;
+        foreach (var kv in src.BusNodes) dest.BusNodes[kv.Key] = kv.Value;
+        foreach (var kv in src.EffectNodes) dest.EffectNodes[kv.Key] = kv.Value;
         foreach (var kv in src.TimelineNodes) dest.TimelineNodes[kv.Key] = kv.Value;
+        foreach (var kv in src.TransitionNodes) dest.TransitionNodes[kv.Key] = kv.Value;
         foreach (var kv in src.InstrumentNodes) dest.InstrumentNodes[kv.Key] = kv.Value;
         foreach (var kv in src.WavEntries) dest.WavEntries[kv.Key] = kv.Value;
         foreach (var kv in src.ParameterNodes) dest.ParameterNodes[kv.Key] = kv.Value;
@@ -64,7 +68,11 @@ public static class FModBankMerger
         foreach (var kv in src.MappingNodes) dest.MappingNodes[kv.Key] = kv.Value;
         foreach (var kv in src.ParameterLayoutNodes) dest.ParameterLayoutNodes[kv.Key] = kv.Value;
         foreach (var kv in src.ControllerNodes) dest.ControllerNodes[kv.Key] = kv.Value;
+        foreach (var kv in src.SnapshotNodes) dest.SnapshotNodes[kv.Key] = kv.Value;
+        foreach (var kv in src.VCANodes) dest.VCANodes[kv.Key] = kv.Value;
 
         dest.SoundBankData.AddRange(src.SoundBankData);
+        dest.ControllerOwnerNodes.AddRange(src.ControllerOwnerNodes);
+        if (src.HashData is { Length: > 0 }) dest.HashData = [.. dest.HashData, .. src.HashData];
     }
 }

@@ -6,6 +6,7 @@ using System.Text;
 
 namespace FModUEParser.Metadata;
 
+// String table is used to convert event FModGuids to human readable names
 public class StringTable
 {
     public readonly EStringTableType Type;
