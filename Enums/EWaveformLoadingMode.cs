@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace FModUEParser.Enums;
 
-public enum EWaveformLoadingMode
+public enum EWaveformLoadingMode : uint
 {
     WaveformLoadingMode_LoadInMemory = 0x0,
     WaveformLoadingMode_DecompressInMemory = 0x1,

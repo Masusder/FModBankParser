@@ -14,7 +14,8 @@ public class TransitionRegionNode : BaseTransitionNode
     public readonly FModGuid DestinationGuid;
     public readonly uint Start;
     public readonly uint End;
-    public readonly List<FEvaluator> Evaluators;
+    public readonly FLegacyParameterConditions? LegacyParameterConditions;
+    public readonly List<FEvaluator> Evaluators = [];
     public readonly FQuantization Quantization;
     public readonly float TransitionChancePercent;
     public readonly uint Flags;
@@ -25,7 +26,16 @@ public class TransitionRegionNode : BaseTransitionNode
         DestinationGuid = new FModGuid(Ar);
         Start = Ar.ReadUInt32();
         End = Ar.ReadUInt32();
-        Evaluators = FEvaluator.ReadEvaluatorList(Ar);
+
+        if (FModReader.Version < 0x43)
+        {
+            LegacyParameterConditions = new FLegacyParameterConditions(Ar);
+        }
+        else
+        {
+            Evaluators = FEvaluator.ReadEvaluatorList(Ar);
+        }
+
         Quantization = new FQuantization(Ar);
         TransitionChancePercent = Ar.ReadSingle();
         Flags = Ar.ReadUInt32();

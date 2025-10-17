@@ -22,6 +22,26 @@ public class SoundDataNode
 
         byte[] fsbBytes = sndChunk[relativeOffset..];
 
+        string fsbHeader = fsbBytes.Length >= 4
+            ? Encoding.UTF8.GetString(fsbBytes, 0, 4)
+            : Encoding.UTF8.GetString(fsbBytes);
+
+        // In case FSB5 is encrypted
+        if (fsbHeader != "FSB5")
+        {
+            Console.WriteLine($"Encrypted FSB5 header at {fsbOffset}");
+
+            if (FModReader.EncryptionKey == null) throw new Exception("FSB5 is encrypted, but encryption key wasn't provided, cannot decrypt FSB5");
+
+            FsbDecryption.Decrypt(fsbBytes, FModReader.EncryptionKey);
+
+            fsbHeader = fsbBytes.Length >= 4
+                ? Encoding.UTF8.GetString(fsbBytes, 0, 4)
+                : Encoding.UTF8.GetString(fsbBytes);
+
+            if (fsbHeader == "FSB5") Console.WriteLine($"Decrypted FSB5 succesfully");
+        }
+
         try
         {
             if (FsbLoader.TryLoadFsbFromByteArray(fsbBytes, out var bank) && bank != null)

@@ -19,6 +19,7 @@ public class FModReader
     public static int Version => FormatInfo.FileVersion;
     public static FFormatInfo FormatInfo;
     public static SoundDataInfo? SoundDataInfo;
+    public static byte[]? EncryptionKey;
     public StringTable? StringTable;
     public SoundTable? SoundTable;
     public FBankInfo? BankInfo;
@@ -44,8 +45,9 @@ public class FModReader
     public readonly Dictionary<FModGuid, VCANode> VCANodes = [];
     public readonly List<FModGuid> ControllerOwnerNodes = [];
 
-    public FModReader(BinaryReader Ar)
+    public FModReader(BinaryReader Ar, byte[]? encryptionKey = null)
     {
+        if (encryptionKey != null) EncryptionKey = encryptionKey;
         ParseHeader(Ar);
         ParseNodes(Ar, Ar.BaseStream.Position, Ar.BaseStream.Length);
     }
@@ -619,9 +621,10 @@ public class FModReader
 
         var result = new T[count];
 
-        _ = Ar.ReadUInt16(); // Payload size
         for (int i = 0; i < count; i++)
         {
+            _ = Ar.ReadUInt16(); // Payload size
+
             if (readElem != null)
             {
                 result[i] = readElem(Ar);
@@ -630,8 +633,6 @@ public class FModReader
             {
                 result[i] = (T)Activator.CreateInstance(typeof(T), Ar)!;
             }
-
-            if (i < count - 1) _ = Ar.ReadUInt16(); // Payload size
         }
 
         return result;

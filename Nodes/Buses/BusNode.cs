@@ -40,11 +40,17 @@ public class BusNode
         PostFaderEffects = FModReader.ReadElemListImp<FModGuid>(Ar);
         MixerStrip = new FMixerStrip(Ar);
 
-        MaximumPolyphony = Ar.ReadInt32();
-        PolyphonyLimitBehavior = Ar.ReadInt32();
+        if (FModReader.Version >= 0x42)
+        {
+            MaximumPolyphony = Ar.ReadInt32();
+            PolyphonyLimitBehavior = Ar.ReadInt32();
+        }
 
-        PreFaderInputChannelLayouts = FModReader.ReadElemListImp(Ar, Ar => Ar.ReadUInt32());
-        PostFaderInputChannelLayouts = FModReader.ReadElemListImp(Ar, Ar => Ar.ReadUInt32());
+        if (FModReader.Version >= 0x5B)
+        {
+            PreFaderInputChannelLayouts = FModReader.ReadElemListImp(Ar, Ar => Ar.ReadUInt32());
+            PostFaderInputChannelLayouts = FModReader.ReadElemListImp(Ar, Ar => Ar.ReadUInt32());
+        }
 
         if (FModReader.Version >= 0x6f)
         {
