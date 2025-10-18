@@ -31,8 +31,7 @@ public class ModulatorNode
 
         if (FModReader.Version < 0x55)
         {
-            PropertyType = (EPropertyType)Ar.ReadInt32();
-            ClockSource = (EClockSource)Ar.ReadInt32();
+            Ar.ReadInt16(); // Payload size
         }
         else
         {
