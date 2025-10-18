@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace FModUEParser.Objects;
 
-public class FLegacyParameterConditions
+public readonly struct FLegacyParameterConditions
 {
     public readonly FModGuid BaseGuid;
     public readonly float Minimum;
@@ -14,7 +14,7 @@ public class FLegacyParameterConditions
 
     public FLegacyParameterConditions(BinaryReader Ar)
     {
-        BaseGuid = new FModGuid();
+        BaseGuid = new FModGuid(Ar);
         Minimum = Ar.ReadSingle();
         Maximum = Ar.ReadSingle();
     }

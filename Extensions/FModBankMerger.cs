@@ -9,7 +9,7 @@ namespace FModUEParser.Extensions;
 public static class FModBankMerger
 {
     // Events and samples can be divided between streams/assets/bank
-    public static List<FModReader> MergeBanks(string folderPath)
+    public static List<FModReader> MergeBanks(string folderPath, byte[]? encryptionKey = null)
     {
         var files = Directory.GetFiles(folderPath, "*.bank", SearchOption.AllDirectories);
         var baseNames = files
@@ -34,7 +34,7 @@ public static class FModBankMerger
             foreach (var file in variants.Where(File.Exists))
             {
                 using var reader = new BinaryReader(File.OpenRead(file));
-                var fmod = new FModReader(reader);
+                var fmod = new FModReader(reader, encryptionKey);
                 if (merged == null)
                 {
                     merged = fmod;

@@ -1,4 +1,6 @@
-﻿namespace FModUEParser;
+﻿using System.Text;
+
+namespace FModUEParser;
 
 public class FsbDecryption
 {
@@ -22,14 +24,20 @@ public class FsbDecryption
         0x0F, 0x8F, 0x4F, 0xCF, 0x2F, 0xAF, 0x6F, 0xEF, 0x1F, 0x9F, 0x5F, 0xDF, 0x3F, 0xBF, 0x7F, 0xFF
     ];
 
+    public static bool IsFSB5Header(byte[] bytes) { return bytes.Length >= 4 && Encoding.ASCII.GetString(bytes, 0, 4) == "FSB5"; }
+
     public static void Decrypt(byte[] fsbBytes, byte[] key)
     {
+        if (fsbBytes == null || key == null || key.Length == 0)
+            throw new ArgumentException("Invalid data or decryption key");
+
         for (int i = 0; i < fsbBytes.Length; i++)
         {
-            byte xor = key[i % key.Length];
-            byte val = fsbBytes[i];
-
-            fsbBytes[i] = (byte)(ReverseBitsTable[val] ^ xor);
+            fsbBytes[i] = (byte)(ReverseBitsTable[fsbBytes[i]] ^ key[i % key.Length]);
         }
+
+        if (!IsFSB5Header(fsbBytes)) throw new Exception("Failed to decrypt FSB5");
+
+        Console.WriteLine("Decrypted FSB5 successfully");
     }
 }

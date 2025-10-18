@@ -39,5 +39,7 @@ public class TransitionRegionNode : BaseTransitionNode
         Quantization = new FQuantization(Ar);
         TransitionChancePercent = Ar.ReadSingle();
         Flags = Ar.ReadUInt32();
+
+        if (FModReader.Version >= 0x34 && FModReader.Version < 0x7F) Ar.ReadBoolean(); 
     }
 }

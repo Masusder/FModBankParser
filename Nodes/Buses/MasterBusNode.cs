@@ -6,4 +6,4 @@ using System.Threading.Tasks;
 
 namespace FModUEParser.Nodes.Buses;
 
-public class MasterBusNode(BinaryReader Ar) : BaseBusNode(Ar);
+public class MasterBusNode(BinaryReader Ar) : BaseBusNode(Ar, FModReader.Version >= 0x49);

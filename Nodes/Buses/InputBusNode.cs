@@ -7,4 +7,4 @@ using System.Threading.Tasks;
 
 namespace FModUEParser.Nodes.Buses;
 
-public class InputBusNode(BinaryReader Ar) : BaseBusNode(Ar);
+public class InputBusNode(BinaryReader Ar) : BaseBusNode(Ar, true);

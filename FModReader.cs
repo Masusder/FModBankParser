@@ -192,6 +192,7 @@ public class FModReader
                     }
                     break;
 
+                case ENodeId.CHUNKID_MODULATOR:
                 case ENodeId.CHUNKID_MODULATORBODY: // Modulator Node
                     {
                         var node = new ModulatorNode(Ar);

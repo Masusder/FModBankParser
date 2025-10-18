@@ -18,8 +18,8 @@ public class BusNode
 
     public readonly int MaximumPolyphony;
     public readonly int PolyphonyLimitBehavior;
-    public readonly uint[] PreFaderInputChannelLayouts;
-    public readonly uint[] PostFaderInputChannelLayouts;
+    public readonly uint[] PreFaderInputChannelLayouts = [];
+    public readonly uint[] PostFaderInputChannelLayouts = [];
 
     public readonly int ObjectPannerIndex;
     public readonly EPortType PortType;

@@ -21,7 +21,8 @@ public class ModulatorNode
 
     public ModulatorNode(BinaryReader Ar)
     {
-        Ar.ReadUInt16(); // Payload size
+        if (FModReader.Version >= 0x55) Ar.ReadUInt16(); // Payload size
+
         BaseGuid = new FModGuid(Ar);
         OwnerGuid = new FModGuid(Ar);
 
