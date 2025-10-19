@@ -3,12 +3,14 @@ using Fmod5Sharp.FmodTypes;
 using FModUEParser.Nodes;
 using FModUEParser.Nodes.Instruments;
 using FModUEParser.Objects;
+using System.Diagnostics;
 
 namespace FModUEParser.Extensions;
 
-public static class EventNodesResolver
+// This isn't something that exists in FMOD and purely an utility to resolve audio events to samples
+internal static class EventNodesResolver
 {
-    public static Dictionary<FModGuid, List<FmodSample>> ResolveAudioEvents(FModReader reader)
+    internal static Dictionary<FModGuid, List<FmodSample>> ResolveAudioEvents(FModReader reader)
     {
         var result = new Dictionary<FModGuid, List<FmodSample>>();
         foreach (var (eventGuid, evNode) in reader.EventNodes)
@@ -148,24 +150,24 @@ public static class EventNodesResolver
 
     public static void PrintMissingSamples(FModReader reader, Dictionary<FModGuid, List<FmodSample>> resolvedEvents)
     {
-        Console.WriteLine($"----------------");
+        Debug.WriteLine($"----------------");
         int sampleCount = resolvedEvents.Values.Sum(samples => samples?.Count ?? 0);
 
-        Console.WriteLine($"+ Resolved {sampleCount} audio sample(s)");
+        Debug.WriteLine($"+ Resolved {sampleCount} audio sample(s)");
 
         var allResolved = GetAllResolvedSampleNames(resolvedEvents);
         var unreferencedSamples = GetUnreferencedSamplesWithGuids(reader, allResolved);
 
         if (unreferencedSamples.Count == 0)
         {
-            Console.WriteLine("All audio samples were resolved");
+            Debug.WriteLine("All audio samples were resolved");
             return;
         }
 
-        Console.WriteLine($"- Unresolved {unreferencedSamples.Count} audio sample(s):");
+        Debug.WriteLine($"- Unresolved {unreferencedSamples.Count} audio sample(s):");
         foreach (var sample in unreferencedSamples)
         {
-            Console.WriteLine($"'{sample.Value.Name}' sample wasn't resolved (GUID: {sample.Key})");
+            Debug.WriteLine($"'{sample.Value.Name}' sample wasn't resolved (GUID: {sample.Key})");
         }
     }
 }

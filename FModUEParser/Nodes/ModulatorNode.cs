@@ -1,11 +1,7 @@
 ﻿using FModUEParser.Enums;
 using FModUEParser.Nodes.ModulatorSubnodes;
 using FModUEParser.Objects;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace FModUEParser.Nodes;
 
@@ -60,7 +56,7 @@ public class ModulatorNode
                 Subnode = new SpectralSidechainModulatorNode(Ar);
                 break;
             default:
-                Console.WriteLine($"Unhandled modulator type {Type} ({(int)Type}) at stream position {Ar.BaseStream.Position}");
+                Debug.WriteLine($"Unhandled modulator type {Type} ({(int)Type}) at stream position {Ar.BaseStream.Position}");
                 break;
         }
     }

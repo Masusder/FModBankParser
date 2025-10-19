@@ -1,10 +1,6 @@
 ﻿using Fmod5Sharp;
 using Fmod5Sharp.FmodTypes;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace FModUEParser.Nodes;
 
@@ -23,14 +19,10 @@ public class SoundDataNode
         byte[] fsbBytes = sndChunk[relativeOffset..];
 
         // In case FSB5 is encrypted
-        if (!FsbDecryption.IsFSB5Header(fsbBytes))
+        if (!FSB5Decryption.IsFSB5Header(fsbBytes))
         {
-            Console.WriteLine($"Encrypted FSB5 header at {fsbOffset}");
-
-            if (FModReader.EncryptionKey == null) 
-                throw new Exception("FSB5 is encrypted, but encryption key wasn't provided, cannot decrypt");
-
-            FsbDecryption.Decrypt(fsbBytes, FModReader.EncryptionKey);
+            Debug.WriteLine($"Encrypted FSB5 header at {fsbOffset}");
+            FSB5Decryption.Decrypt(fsbBytes, FModReader.EncryptionKey);
         }
 
         try
@@ -38,21 +30,21 @@ public class SoundDataNode
             if (FsbLoader.TryLoadFsbFromByteArray(fsbBytes, out var bank) && bank != null)
             {
                 SoundBank = bank;
-                Console.WriteLine($"FSB5 parsed successfully, samples: {bank.Samples.Count}");
+                Debug.WriteLine($"FSB5 parsed successfully, samples: {bank.Samples.Count}");
                 for (int i = 0; i < bank.Samples.Count; i++)
                 {
                     var sample = bank.Samples[i];
-                    //Console.WriteLine($"Sample: {sample.Name}, Index: {i}");
+                    //Debug.WriteLine($"Sample: {sample.Name}, Index: {i}");
                 }
             }
             else
             {
-                Console.WriteLine($"Failed to parse FSB5 at {fsbOffset}");
+                Debug.WriteLine($"Failed to parse FSB5 at {fsbOffset}");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Exception thrown while parsing FSB5 at {fsbOffset}: {ex.Message}");
+            Debug.WriteLine($"Exception thrown while parsing FSB5 at {fsbOffset}: {ex.Message}");
         }
     }
 }

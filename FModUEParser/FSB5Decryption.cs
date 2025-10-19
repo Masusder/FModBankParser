@@ -1,8 +1,9 @@
-﻿using System.Text;
+﻿using System.Diagnostics;
+using System.Text;
 
 namespace FModUEParser;
 
-public class FsbDecryption
+public class FSB5Decryption
 {
     private static readonly byte[] ReverseBitsTable =
     [
@@ -26,18 +27,20 @@ public class FsbDecryption
 
     public static bool IsFSB5Header(byte[] bytes) { return bytes.Length >= 4 && Encoding.ASCII.GetString(bytes, 0, 4) == "FSB5"; }
 
-    public static void Decrypt(byte[] fsbBytes, byte[] key)
+    public static void Decrypt(byte[] fsbBytes, byte[]? key)
     {
-        if (fsbBytes == null || key == null || key.Length == 0)
-            throw new ArgumentException("Invalid data or decryption key");
+        if (key == null || key.Length == 0)
+            throw new Exception("FSB5 is encrypted, but encryption key wasn't provided, cannot decrypt");
+        if (fsbBytes == null)
+            throw new ArgumentException("Invalid data to decrypt");
 
         for (int i = 0; i < fsbBytes.Length; i++)
         {
             fsbBytes[i] = (byte)(ReverseBitsTable[fsbBytes[i]] ^ key[i % key.Length]);
         }
 
-        if (!IsFSB5Header(fsbBytes)) throw new Exception("Failed to decrypt FSB5");
+        if (!IsFSB5Header(fsbBytes)) throw new Exception("Failed to decrypt FSB5, make sure encryption key is correct");
 
-        Console.WriteLine("Decrypted FSB5 successfully");
+        Debug.WriteLine("Decrypted FSB5 successfully");
     }
 }

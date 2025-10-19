@@ -7,15 +7,14 @@ using FModUEParser.Nodes.Effects;
 using FModUEParser.Nodes.Instruments;
 using FModUEParser.Nodes.Transitions;
 using FModUEParser.Objects;
-using System.Reflection.PortableExecutable;
-using System.Runtime.InteropServices;
+using System.Diagnostics;
 using System.Text;
-using System.Xml;
 
 namespace FModUEParser;
 
 public class FModReader
 {
+    public string? BankName { get; set; }
     public static int Version => FormatInfo.FileVersion;
     public static FFormatInfo FormatInfo;
     public static SoundDataInfo? SoundDataInfo;
@@ -70,9 +69,9 @@ public class FModReader
         if (actualSize < expectedSize)
             throw new Exception($"Truncated file: expected {expectedSize} bytes, got {actualSize}");
         else if (actualSize > expectedSize)
-            Console.WriteLine($"Warning: file larger than RIFF size (expected {expectedSize}, got {actualSize})");
+            Debug.WriteLine($"Warning: file larger than RIFF size (expected {expectedSize}, got {actualSize})");
 
-        Console.WriteLine($"FMod bank detected, size={riffSize}, type={fileType}");
+        Debug.WriteLine($"FMod bank detected, size={riffSize}, type={fileType}");
     }
 
     private void ParseNodes(BinaryReader Ar, long start, long end)
@@ -287,7 +286,7 @@ public class FModReader
                     break;
 
                 default:
-                    Console.WriteLine($"Unknown chunk {nodeId} at {nodeStart}, size={nodeSize}, skipped");
+                    Debug.WriteLine($"Unknown chunk {nodeId} at {nodeStart}, size={nodeSize}, skipped");
                     break;
             }
 
@@ -299,7 +298,7 @@ public class FModReader
 
             if (Ar.BaseStream.Position != nextNode)
             {
-                Console.WriteLine($"Warning: chunk {nodeId} did not parse fully (at {Ar.BaseStream.Position}, should be {nextNode})");
+                Debug.WriteLine($"Warning: chunk {nodeId} did not parse fully (at {Ar.BaseStream.Position}, should be {nextNode})");
                 Ar.BaseStream.Position = nextNode;
             }
         }
@@ -584,6 +583,54 @@ public class FModReader
         }
     }
 
+    public FModGuid GetBankGuid() => BankInfo?.BaseGuid ?? new FModGuid();
+
+    public void Merge(FModReader src)
+    {
+        ArgumentNullException.ThrowIfNull(src);
+
+        if (ReferenceEquals(this, src))
+            return;
+
+        foreach (var kv in src.EventNodes)
+            EventNodes[kv.Key] = kv.Value;
+        foreach (var kv in src.BusNodes)
+            BusNodes[kv.Key] = kv.Value;
+        foreach (var kv in src.EffectNodes)
+            EffectNodes[kv.Key] = kv.Value;
+        foreach (var kv in src.TimelineNodes)
+            TimelineNodes[kv.Key] = kv.Value;
+        foreach (var kv in src.TransitionNodes)
+            TransitionNodes[kv.Key] = kv.Value;
+        foreach (var kv in src.InstrumentNodes)
+            InstrumentNodes[kv.Key] = kv.Value;
+        foreach (var kv in src.WavEntries)
+            WavEntries[kv.Key] = kv.Value;
+        foreach (var kv in src.ParameterNodes)
+            ParameterNodes[kv.Key] = kv.Value;
+        foreach (var kv in src.ModulatorNodes)
+            ModulatorNodes[kv.Key] = kv.Value;
+        foreach (var kv in src.CurveNodes)
+            CurveNodes[kv.Key] = kv.Value;
+        foreach (var kv in src.PropertyNodes)
+            PropertyNodes[kv.Key] = kv.Value;
+        foreach (var kv in src.MappingNodes)
+            MappingNodes[kv.Key] = kv.Value;
+        foreach (var kv in src.ParameterLayoutNodes)
+            ParameterLayoutNodes[kv.Key] = kv.Value;
+        foreach (var kv in src.ControllerNodes)
+            ControllerNodes[kv.Key] = kv.Value;
+        foreach (var kv in src.SnapshotNodes)
+            SnapshotNodes[kv.Key] = kv.Value;
+        foreach (var kv in src.VCANodes)
+            VCANodes[kv.Key] = kv.Value;
+
+        SoundBankData.AddRange(src.SoundBankData);
+        ControllerOwnerNodes.AddRange(src.ControllerOwnerNodes);
+        if (src.HashData is { Length: > 0 })
+            HashData = [.. HashData, .. src.HashData];
+    }
+
     #region Global Readers
 
     public static uint ReadX16(BinaryReader Ar)
@@ -656,7 +703,7 @@ public class FModReader
             {
                 Ar.BaseStream.Position += payloadSize;
 #if DEBUG
-                Console.WriteLine($"Warning: '{typeof(T).Name}' element size {payloadSize} does not match expected {expectedSize}, skipping");
+                Debug.WriteLine($"Warning: '{typeof(T).Name}' element size {payloadSize} does not match expected {expectedSize}, skipping");
 #endif
             }
             else if (readElem != null)

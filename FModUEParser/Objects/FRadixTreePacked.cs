@@ -3,19 +3,26 @@ using System.Text;
 
 namespace FModUEParser.Objects;
 
-// Example usage:
-// var guidString = "5e136771-13a0-4020-b14c-cdb0efa627b0";
-// var guid = new FModGuid(guidString);
-   
-// if (fmodReader.StringData?.RadixTree is { } tree &&
-//     tree.TryGetString(guid, out var path))
-// {
-//     Console.WriteLine($"GUID {guid} -> {path}");
-// }
-// else
-// {
-//     Console.WriteLine($"Could not resolve GUID {guid}.");
-// }
+/// <summary>
+/// Provides functionality to resolve FMOD audio event GUIDs to their corresponding string paths
+/// using a radix tree. It's only available if .string.bank exists which isn't always the case.
+/// 
+/// Example usage:
+/// <code>
+/// var guidString = "5e136771-13a0-4020-b14c-cdb0efa627b0";
+/// var guid = new FModGuid(guidString);
+/// 
+/// if (fmodReader.StringData?.RadixTree is { } tree &&
+///     tree.TryGetString(guid, out var path))
+/// {
+///     Console.WriteLine($"GUID {guid} -> {path}");
+/// }
+/// else
+/// {
+///     Console.WriteLine($"Could not resolve GUID {guid}.");
+/// }
+/// </code>
+/// </summary>
 public partial class FRadixTreePacked
 {
     private const int Sentinel24 = 0xFFFFFF;

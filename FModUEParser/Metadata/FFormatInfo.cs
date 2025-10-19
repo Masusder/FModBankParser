@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace FModUEParser.Metadata;
 
@@ -14,7 +12,7 @@ public readonly struct FFormatInfo
     public FFormatInfo(BinaryReader Ar)
     {
         FileVersion = Ar.ReadInt32();
-        Console.WriteLine($"Soundbank version: 0x{FileVersion:X}");
+        Debug.WriteLine($"Soundbank version: 0x{FileVersion:X}");
         CompatVersion = Ar.ReadInt32();
     }
 }
