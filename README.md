@@ -137,7 +137,7 @@ else
 <br>
 
 > [!NOTE]
-> For a full list of tested versions check [this](https://github.com/Masusder/FModUEParser/blob/9c2de33cc428aa8047238208c438889e393aa508/FModUEParser/FModUEParser.cs#L12) summary.
+> For a full list of tested versions check [this](https://github.com/Masusder/FModUEParser/blob/main/FModUEParser/FModUEParser.cs#L13) summary.
 
 ---
 
