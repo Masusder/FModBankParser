@@ -35,7 +35,7 @@ internal static class FModBankMerger
             foreach (var file in variants.Where(File.Exists))
             {
                 using var reader = new BinaryReader(File.OpenRead(file));
-                var fmod = new FModReader(reader, encryptionKey);
+                var fmod = new FModReader(reader, baseName, encryptionKey);
 
                 if (merged == null)
                 {
@@ -47,11 +47,7 @@ internal static class FModBankMerger
                 }
             }
 
-            if (merged != null)
-            {
-                merged.BankName = baseName;
-                mergedReaders.Add(merged);
-            }
+            if (merged != null) mergedReaders.Add(merged);
         }
 
         return mergedReaders;

@@ -3,6 +3,7 @@ using FModUEParser.Extensions;
 using FModUEParser.Objects;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -28,24 +29,24 @@ public class FModUEParser
     /// <summary>
     /// Reads and parses a single FMOD bank file.
     /// </summary>
-    public static FModReader LoadSoundBank(string bankPath, byte[]? encryptionKey = null)
+    public static FModReader LoadSoundBank(FileInfo bankPath, byte[]? encryptionKey = null)
     {
-        if (string.IsNullOrWhiteSpace(bankPath))
+        if (!bankPath.Exists)
             throw new ArgumentException("Soundbank path cannot be null or empty.", nameof(bankPath));
 
-        using var reader = new BinaryReader(File.OpenRead(bankPath));
-        return new FModReader(reader);
+        using var reader = new BinaryReader(File.OpenRead(bankPath.FullName));
+        return new FModReader(reader, bankPath.Name, encryptionKey);
     }
 
     /// <summary>
     /// Merges all FMOD banks in a directory and returns readers for each one.
     /// </summary>
-    public static IEnumerable<FModReader> LoadSoundBanks(string directoryPath, byte[]? encryptionKey = null)
+    public static IEnumerable<FModReader> LoadSoundBanks(DirectoryInfo directoryPath, byte[]? encryptionKey = null)
     {
-        if (string.IsNullOrWhiteSpace(directoryPath))
+        if (!directoryPath.Exists)
             throw new ArgumentException("Directory path cannot be null or empty.", nameof(directoryPath));
 
-        return FModBankMerger.MergeBanks(directoryPath, encryptionKey);
+        return FModBankMerger.MergeBanks(directoryPath.FullName, encryptionKey);
     }
 
     /// <summary>
@@ -59,5 +60,68 @@ public class FModUEParser
         EventNodesResolver.PrintMissingSamples(fmodReader, resolvedEvents);
 #endif
         return resolvedEvents;
+    }
+
+    /// <summary>
+    /// Result of audio export operation.
+    /// </summary>
+    public class AudioExportResult
+    {
+        /// <summary>
+        /// Number of files successfully exported.
+        /// </summary>
+        public int FilesExported { get; init; }
+
+        /// <summary>
+        /// Whether at least one file was exported.
+        /// </summary>
+        public bool Success => FilesExported > 0;
+    }
+
+    /// <summary>
+    /// Exports all audio samples from a FMOD reader to disk.
+    /// </summary>
+    /// <param name="reader">The FModReader containing soundbanks.</param>
+    /// <param name="outputDirectory">Directory to save audio files.</param>
+    /// <param name="overwrite">Whether to overwrite existing files.</param>
+    /// <returns>An AudioExportResult with file count and success status.</returns>
+    public static AudioExportResult ExportAudio(FModReader reader, DirectoryInfo outputDirectory, bool overwrite = true)
+    {
+        ArgumentNullException.ThrowIfNull(reader);
+
+        if (reader.SoundBankData == null || reader.SoundBankData.Count == 0)
+            return new AudioExportResult { FilesExported = 0 };
+
+        int exportedFiles = 0;
+        outputDirectory.Create();
+        foreach (var bank in reader.SoundBankData)
+        {
+            if (bank.Samples == null || bank.Samples.Count == 0)
+                continue;
+
+            DirectoryInfo bankFolder = new(Path.Combine(outputDirectory.FullName, reader.BankName!));
+            bankFolder.Create();
+
+            for (int i = 0; i < bank.Samples.Count; i++)
+            {
+                var sample = bank.Samples[i];
+                if (!sample.RebuildAsStandardFileFormat(out var dataBytes, out var fileExtension))
+                    continue;
+
+                string sampleName = string.IsNullOrWhiteSpace(sample.Name)
+                    ? $"Sample_{i}"
+                    : sample.Name;
+
+                FileInfo filePath = new(Path.Combine(bankFolder.FullName, $"{sampleName}.{fileExtension}"));
+
+                if (!overwrite && filePath.Exists)
+                    continue;
+
+                File.WriteAllBytes(filePath.FullName, dataBytes);
+                exportedFiles++;
+            }
+        }
+
+        return new AudioExportResult { FilesExported = exportedFiles };
     }
 }

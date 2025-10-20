@@ -14,7 +14,7 @@ namespace FModUEParser;
 
 public class FModReader
 {
-    public string? BankName { get; set; }
+    public readonly string BankName;
     public static int Version => FormatInfo.FileVersion;
     public static FFormatInfo FormatInfo;
     public static SoundDataInfo? SoundDataInfo;
@@ -44,8 +44,9 @@ public class FModReader
     public readonly Dictionary<FModGuid, VCANode> VCANodes = [];
     public readonly List<FModGuid> ControllerOwnerNodes = [];
 
-    public FModReader(BinaryReader Ar, byte[]? encryptionKey = null)
+    public FModReader(BinaryReader Ar, string bankName, byte[]? encryptionKey = null)
     {
+        BankName = bankName;
         if (encryptionKey != null) EncryptionKey = encryptionKey;
         ParseHeader(Ar);
         ParseNodes(Ar, Ar.BaseStream.Position, Ar.BaseStream.Length);

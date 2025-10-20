@@ -1,47 +1,132 @@
-﻿using FModUEParser;
-using System;
-using System.Diagnostics;
-using System.IO;
+﻿using System.CommandLine;
 using System.Text;
 
 namespace FModUEParser.Demo;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static int Main(string[] args)
     {
-        if (args.Length == 0)
+        var pathOption = new Option<FileSystemInfo>("--path", ["-p"]) 
+        { 
+            Description = "Path to a FMOD .bank file or folder containing soundbanks",
+            Required = true 
+        };
+        var keyOption = new Option<string>("--key", ["-k"]) { Description = "Optional encryption key" };
+        var exportOption = new Option<bool>("--export-audio", ["-e"]) { Description = "Whether to export audio files" };
+        var outDirOption = new Option<DirectoryInfo>("--output", ["-o"])
         {
-            Console.WriteLine("Usage: FModUEParser.Demo <path> [encryptionKeyString]");
+            Description = "Optional output folder path for exported audio",
+            DefaultValueFactory = _ => new DirectoryInfo("ExportedAudio")
+        };
+
+        var rootCommand = new RootCommand("FMOD Parser Demo")
+        {
+            pathOption,
+            keyOption,
+            exportOption,
+            outDirOption
+        };
+
+        rootCommand.SetAction(parseResult => RunParseAndProcess(
+            parseResult.GetValue(pathOption),
+            parseResult.GetValue(keyOption),
+            parseResult.GetValue(exportOption),
+            parseResult.GetValue(outDirOption)
+        ));
+
+        return rootCommand.Parse(args).Invoke();
+    }
+
+    private static void RunParseAndProcess(FileSystemInfo? fsInfo, string? keyString, bool exportAudio, DirectoryInfo? outDir)
+    {
+        var outputDirectory = outDir ?? new DirectoryInfo("ExportedAudio");
+        byte[]? encryptionKey = string.IsNullOrEmpty(keyString) ? null : Encoding.UTF8.GetBytes(keyString);
+
+        try
+        {
+            if (fsInfo is FileInfo file)
+            {
+                if (!file.Extension.Equals(".bank", StringComparison.OrdinalIgnoreCase))
+                {
+                    Console.Error.WriteLine($"The file must be a .bank file: {file.Name}");
+                    return;
+                }
+
+                ProcessBankFile(file, encryptionKey, exportAudio, outputDirectory);
+            }
+            else if (fsInfo is DirectoryInfo dir)
+            {
+                ProcessBankDirectory(dir, encryptionKey, exportAudio, outputDirectory);
+            }
+            else
+            {
+                Console.Error.WriteLine("Unsupported path type.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Unhandled exception: {ex.GetType().Name}: {ex.Message}");
+        }
+    }
+
+    private static void ProcessBankFile(FileInfo file, byte[]? encryptionKey, bool shouldExport, DirectoryInfo outDir)
+    {
+        Console.WriteLine($"Loading soundbank: {file.FullName}");
+        var reader = FModUEParser.LoadSoundBank(file, encryptionKey);
+
+        if (reader == null)
+        {
+            Console.WriteLine($"Failed to load soundbank: {file.Name}");
             return;
         }
 
-        string fmodPath = args[0];
-        byte[]? encryptionKey = args.Length > 1 ? Encoding.UTF8.GetBytes(args[1]) : null; // Optional encryption key if soundbanks are encrypted
+        PrintReaderSummary(reader);
 
-        if (fmodPath.EndsWith(".bank", StringComparison.OrdinalIgnoreCase))
+        if (shouldExport)
         {
-            Console.WriteLine($"Loading soundbank: {Path.GetFileName(fmodPath)}");
+            var exported = FModUEParser.ExportAudio(reader, outDir);
 
-            var fmodReader = FModUEParser.LoadSoundBank(fmodPath, encryptionKey);
-            var resolvedEvents = FModUEParser.ResolveAudioEvents(fmodReader);
-
-            Console.WriteLine($"Resolved {resolvedEvents.Count} audio events");
-        }
-        else
-        {
-            Console.WriteLine($"Loading all soundbanks from: {fmodPath}");
-
-            var mergedReaders = FModUEParser.LoadSoundBanks(fmodPath, encryptionKey);
-
-            foreach (var fmodReader in mergedReaders)
+            if (exported.Success)
             {
-                Console.WriteLine($"Loaded soundbank: {fmodReader.BankName}");
-                var resolvedEvents = FModUEParser.ResolveAudioEvents(fmodReader);
-                Console.WriteLine($"Resolved {resolvedEvents.Count} events");
+                Console.WriteLine($"Exported {exported.FilesExported} audio files to: {outDir.FullName}");
+            }
+            else
+            {
+                Console.WriteLine($"No audio files were exported for {file.Name}.");
             }
         }
+    }
 
-        Console.WriteLine("FMOD parsing completed successfully");
+    private static void ProcessBankDirectory(DirectoryInfo dir, byte[]? encryptionKey, bool shouldExport, DirectoryInfo outDir)
+    {
+        Console.WriteLine($"Loading all soundbanks from: {dir.FullName}");
+        var readers = FModUEParser.LoadSoundBanks(dir, encryptionKey);
+
+        foreach (var reader in readers)
+        {
+            PrintReaderSummary(reader);
+
+            if (shouldExport)
+            {
+                var exported = FModUEParser.ExportAudio(reader, outDir);
+
+                if (exported.Success)
+                {
+                    Console.WriteLine($"Exported {exported.FilesExported} audio files to: {outDir.FullName}");
+                }
+                else
+                {
+                    Console.WriteLine($"No audio files were exported for {reader.BankName}.");
+                }
+            }
+        }
+    }
+
+    private static void PrintReaderSummary(dynamic reader)
+    {
+        Console.WriteLine($"\nSoundbank: {reader.BankName} (GUID: {reader.GetBankGuid()})");
+        Console.WriteLine($"FMOD Version: {reader.BankInfo.FileVersion}");
+        Console.WriteLine($"Event count: {reader.EventNodes.Count}");
     }
 }
