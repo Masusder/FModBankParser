@@ -4,8 +4,9 @@
 
 </div>
 <div align="center">
-  
+
 [![License](https://img.shields.io/github/license/Masusder/FModBankParser?style=for-the-badge&color=blue)](https://github.com/Masusder/FModBankParser/blob/main/LICENSE)
+[![NuGet](https://img.shields.io/badge/nuget-FModBankParser-blue?style=for-the-badge&color=dodgerblue)](https://github.com/Masusder/FModBankParser/packages)
 [![Stars](https://img.shields.io/github/stars/Masusder/FModBankParser?style=for-the-badge&color=F7DF1E)](https://github.com/Masusder/FModBankParser/stargazers)
 [![Releases](https://img.shields.io/github/downloads/Masusder/FModBankParser/total?style=for-the-badge&color=00ffa2&label=Downloads)](https://github.com/Masusder/FModBankParser/releases)
 
@@ -65,7 +66,7 @@ dotnet add reference ../FModBankParser/FModBankParser.csproj
 
 Project comes with an example FModBankParser.Demo that you can use.
 
-Compile and run the demo executable from a terminal:
+Compile the project or download the demo executable from the [Releases](https://github.com/Masusder/FModBankParser/releases) tab, then run it from a terminal:
 
 ```bash
 FModBankParser.Demo --path <file_or_folder> [--key <encryptionKey>] [--export-audio] [--output <outputFolder>]
