@@ -14,7 +14,7 @@
 > **C# library for parsing and extracting FMOD Studio sound banks, with a primary focus on Unreal Engine projects.**
 
 FModBankParser allows you to **analyze, extract, and inspect** FMOD `.bank` files of any kind, including those used in commercial games and standalone FMOD projects.
-It supports a wide range of FMOD versions, including those used by UE4 and UE5 titles.
+It supports a wide range of FMOD versions.
 
 This library was originally developed for the [FModel](https://github.com/4sval/FModel) project, if you are only interested in exploring or extracting FMOD audio from UE games you should check it out first.
 
@@ -37,6 +37,15 @@ It is **not designed** and will **never** be used to rebuild or modify soundbank
 ---
 
 ## Installation
+
+### From NuGet
+The easiest way to use FModBankParser is via NuGet:
+
+```bash
+dotnet add package FModBankParser
+```
+
+### From local project
 
 If you have a local copy of the project:
 
@@ -138,6 +147,11 @@ else
 
 > [!NOTE]
 > For a full list of tested versions check [this](https://github.com/Masusder/FModBankParser/blob/main/FModBankParser/FModBankParser.cs#L13) summary.
+
+---
+
+## Acknowledgements
+- Special thanks to [LongerWarrior](https://github.com/LongerWarrior) for the help.
 
 ---
 
