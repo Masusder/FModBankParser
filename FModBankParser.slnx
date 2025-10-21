@@ -1,0 +1,4 @@
+<Solution>
+    <Project Path="FModBankParser.Demo/FModBankParser.Demo.csproj" />
+    <Project Path="FModBankParser/FModBankParser.csproj" />
+</Solution>

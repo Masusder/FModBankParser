@@ -1,19 +1,19 @@
 <div align="center">
   
-# FModUEParser
+# FModBankParser
 
 </div>
 <div align="center">
   
-[![License](https://img.shields.io/github/license/Masusder/FModUEParser?style=for-the-badge&color=blue)](https://github.com/Masusder/FModUEParser/blob/main/LICENSE)
-[![Stars](https://img.shields.io/github/stars/Masusder/FModUEParser?style=for-the-badge&color=F7DF1E)](https://github.com/Masusder/FModUEParser/stargazers)
-[![Releases](https://img.shields.io/github/downloads/Masusder/FModUEParser/total?style=for-the-badge&color=00ffa2&label=Downloads)](https://github.com/Masusder/FModUEParser/releases)
+[![License](https://img.shields.io/github/license/Masusder/FModBankParser?style=for-the-badge&color=blue)](https://github.com/Masusder/FModBankParser/blob/main/LICENSE)
+[![Stars](https://img.shields.io/github/stars/Masusder/FModBankParser?style=for-the-badge&color=F7DF1E)](https://github.com/Masusder/FModBankParser/stargazers)
+[![Releases](https://img.shields.io/github/downloads/Masusder/FModBankParser/total?style=for-the-badge&color=00ffa2&label=Downloads)](https://github.com/Masusder/FModBankParser/releases)
 
 </div>
 
 > **C# library for parsing and extracting FMOD Studio sound banks, with a primary focus on Unreal Engine projects.**
 
-FModUEParser allows you to **analyze, extract, and inspect** FMOD `.bank` files of any kind, including those used in commercial games and standalone FMOD projects.
+FModBankParser allows you to **analyze, extract, and inspect** FMOD `.bank` files of any kind, including those used in commercial games and standalone FMOD projects.
 It supports a wide range of FMOD versions, including those used by UE4 and UE5 titles.
 
 This library was originally developed for the [FModel](https://github.com/4sval/FModel) project, if you are only interested in exploring or extracting FMOD audio from UE games you should check it out first.
@@ -41,25 +41,25 @@ It is **not designed** and will **never** be used to rebuild or modify soundbank
 If you have a local copy of the project:
 
 ```bash
-git clone https://github.com/Masusder/FModUEParser.git
+git clone https://github.com/Masusder/FModBankParser.git
 ```
 
 You can include it directly in your .NET project:
 
 ```bash
-dotnet add reference ../FModUEParser/FModUEParser.csproj
+dotnet add reference ../FModBankParser/FModBankParser.csproj
 ```
 
 ---
 
 ## Demo CLI Usage
 
-Project comes with an example FModUEParser.Demo that you can use.
+Project comes with an example FModBankParser.Demo that you can use.
 
 Compile and run the demo executable from a terminal:
 
 ```bash
-FModUEParser.Demo --path <file_or_folder> [--key <encryptionKey>] [--export-audio] [--output <outputFolder>]
+FModBankParser.Demo --path <file_or_folder> [--key <encryptionKey>] [--export-audio] [--output <outputFolder>]
 ```
 
 ### Options
@@ -77,9 +77,9 @@ FModUEParser.Demo --path <file_or_folder> [--key <encryptionKey>] [--export-audi
 ### Load a Single FMOD Bank
 
 ```csharp
-using FModUEParser;
+using FModBankParser;
 
-var reader = FModUEParser.LoadSoundBank("Master.bank");
+var reader = FModBankParser.LoadSoundBank("Master.bank");
 
 Console.WriteLine($"Soundbank: {reader.BankName} (GUID: {reader.GetBankGuid()})");
 Console.WriteLine($"FMOD Version: {reader.BankInfo.FileVersion}");
@@ -89,9 +89,9 @@ Console.WriteLine($"Event count: {reader.EventNodes.Count}");
 ### Load All Banks in a Directory
 
 ```csharp
-using FModUEParser;
+using FModBankParser;
 
-var readers = FModUEParser.LoadSoundBanks("C:\\Games\\MyProject\\Content\\FMOD");
+var readers = FModBankParser.LoadSoundBanks("C:\\Games\\MyProject\\Content\\FMOD");
 
 foreach (var reader in readers)
     Console.WriteLine($"Loaded bank: {reader.BankName}");
@@ -102,14 +102,14 @@ foreach (var reader in readers)
 > FSB5 audio extraction is handled via [Fmod5Sharp](https://github.com/SamboyCoding/Fmod5Sharp) library, make sure to check it out.
 
 ```csharp
-using FModUEParser;
+using FModBankParser;
 
 // Load a sound bank
-var reader = FModUEParser.LoadSoundBank("Master.bank")
+var reader = FModBankParser.LoadSoundBank("Master.bank")
 var outDir = new DirectoryInfo("ExportedAudio")
 
 // Export all embedded audio
-var exportedAudio = FModUEParser.ExportAudio(reader, outDir);
+var exportedAudio = FModBankParser.ExportAudio(reader, outDir);
 
 if (exportedAudio.Success)
 {
@@ -137,9 +137,9 @@ else
 <br>
 
 > [!NOTE]
-> For a full list of tested versions check [this](https://github.com/Masusder/FModUEParser/blob/main/FModUEParser/FModUEParser.cs#L13) summary.
+> For a full list of tested versions check [this](https://github.com/Masusder/FModBankParser/blob/main/FModBankParser/FModBankParser.cs#L13) summary.
 
 ---
 
 ## License
-FModUEParser is licensed under [Apache License 2.0](https://github.com/Masusder/FModUEParser/blob/main/LICENSE), licenses of third-party libraries used are listed [here](https://github.com/Masusder/FModUEParser/blob/main/NOTICE).
+FModBankParser is licensed under [Apache License 2.0](https://github.com/Masusder/FModBankParser/blob/main/LICENSE), licenses of third-party libraries used are listed [here](https://github.com/Masusder/FModBankParser/blob/main/NOTICE).

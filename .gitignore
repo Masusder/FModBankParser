@@ -53,4 +53,8 @@ CodeCoverage/
 TestResult.xml
 nunit-*.xml
 /.vs
-/FModUEParser.Demo/Properties
+
+/FModBankParser.Demo/Properties
+/FModBankParser/Properties
+FModBankParser/FModBankParser.csproj.user
+FModBankParser.Demo/FModBankParser.Demo.csproj.user
