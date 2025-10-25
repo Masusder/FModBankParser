@@ -14,7 +14,6 @@ public class ParameterLayoutNode
     public readonly FModGuid LegacyGuid;
     public readonly FModGuid[] Instruments = [];
     public readonly uint Flags;
-    public readonly FModGuid[] Controllers = [];
     public readonly FTriggerBoxParameterLayout[] TriggerBoxes = [];
 
     public ParameterLayoutNode(BinaryReader Ar)
