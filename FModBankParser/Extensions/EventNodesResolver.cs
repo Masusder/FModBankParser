@@ -47,7 +47,6 @@ internal static class EventNodesResolver
             if (reader.ParameterLayoutNodes.TryGetValue(paramGuid, out var paramLayoutNode))
             {
                 foreach (var instGuid in paramLayoutNode.Instruments) stack.Push(instGuid);
-                foreach (var controllerGuid in paramLayoutNode.Controllers) stack.Push(controllerGuid);
                 foreach (var triggerBoxGuid in paramLayoutNode.TriggerBoxes) stack.Push(triggerBoxGuid.InstrumentGuid);
             }
         }

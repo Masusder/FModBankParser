@@ -27,14 +27,14 @@ public class ParameterLayoutNode
         if (FModReader.Version >= 0x82)
         {
             Instruments = FModReader.ReadElemListImp<FModGuid>(Ar);
-            Ar.ReadUInt32(); // Flags
+            Flags = Ar.ReadUInt32();
             return;
         }
 
         if (FModReader.Version >= 0x6a)
         {
             TriggerBoxes = FModReader.ReadElemListImp<FTriggerBoxParameterLayout>(Ar);
-            Ar.ReadUInt32(); // Flags
+            Flags = Ar.ReadUInt32();
             return;
         }
         else
@@ -51,8 +51,5 @@ public class ParameterLayoutNode
             }
             TriggerBoxes = converted;
         }
-
-        if (FModReader.Version >= 0x71) Controllers = FModReader.ReadElemListImp<FModGuid>(Ar);
-        if (FModReader.Version >= 0x82) Instruments = FModReader.ReadElemListImp<FModGuid>(Ar);
     }
 }
