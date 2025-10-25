@@ -236,6 +236,7 @@ public class FModReader
                     }
                     break;
 
+                case ENodeId.CHUNKID_VCA:
                 case ENodeId.CHUNKID_VCABODY: // VCA Node
                     {
                         var node = new VCANode(Ar);
