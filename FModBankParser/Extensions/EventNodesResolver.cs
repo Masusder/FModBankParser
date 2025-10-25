@@ -2,6 +2,7 @@
 using Fmod5Sharp.FmodTypes;
 using FModBankParser.Nodes;
 using FModBankParser.Nodes.Instruments;
+using FModBankParser.Nodes.Transitions;
 using FModBankParser.Objects;
 using System.Diagnostics;
 
@@ -53,6 +54,10 @@ internal static class EventNodesResolver
 
         foreach (var inst in evNode.EventTriggeredInstruments) stack.Push(inst);
 
+        var destinationLookup = reader.TransitionNodes.Values
+            .OfType<TransitionRegionNode>()
+            .ToLookup(n => n.DestinationGuid);
+
         while (stack.Count > 0)
         {
             var guid = stack.Pop();
@@ -66,7 +71,7 @@ internal static class EventNodesResolver
                 foreach (var tempoMarker in tmlNode2.TimelineTempoMarkers) stack.Push(tempoMarker.BaseGuid);
             }
 
-            if (reader.TransitionNodes.TryGetValue(guid, out var transTimeline))
+            foreach (var transTimeline in destinationLookup[guid])
             {
                 if (transTimeline.TransitionBody != null)
                 {
@@ -76,8 +81,11 @@ internal static class EventNodesResolver
                         stack.Push(fade.ControllerGuid);
                     }
 
-                    foreach (var box in transTimeline.TransitionBody.TriggeredTriggerBoxes) stack.Push(box.Guid);
-                    foreach (var box in transTimeline.TransitionBody.TimeLockedTriggerBoxes) stack.Push(box.Guid);
+                    foreach (var box in transTimeline.TransitionBody.TriggeredTriggerBoxes)
+                        stack.Push(box.Guid);
+
+                    foreach (var box in transTimeline.TransitionBody.TimeLockedTriggerBoxes)
+                        stack.Push(box.Guid);
                 }
             }
 

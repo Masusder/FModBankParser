@@ -572,11 +572,8 @@ public class FModReader
             case ENodeId.CHUNKID_TRANSITIONREGIONBODY: // Transition Region Node
                 {
                     var node = new TransitionRegionNode(Ar);
-                    if (!TransitionNodes.ContainsKey(node.DestinationGuid))
-                    {
-                        TransitionNodes[node.DestinationGuid] = node;
-                    }
-                    parentStack.Push(new FParentContext(nodeId, node.DestinationGuid)); // Points to transition timeline node
+                    TransitionNodes[node.BaseGuid] = node;
+                    parentStack.Push(new FParentContext(nodeId, node.BaseGuid)); // Points to transition timeline node
                 }
                 break;
 

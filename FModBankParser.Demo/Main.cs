@@ -83,6 +83,10 @@ public class Program
 
         PrintReaderSummary(reader);
 
+#if DEBUG
+        FModBankParser.ResolveAudioEvents(reader);
+#endif
+
         if (shouldExport)
         {
             var exported = FModBankParser.ExportAudio(reader, outDir);
@@ -106,6 +110,10 @@ public class Program
         foreach (var reader in readers)
         {
             PrintReaderSummary(reader);
+
+#if DEBUG
+            FModBankParser.ResolveAudioEvents(reader);
+#endif
 
             if (shouldExport)
             {

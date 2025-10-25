@@ -8,8 +8,12 @@
 		<PackageId>FModBankParser</PackageId>
 		<Nullable>enable</Nullable>
 		<Version>1.0.0</Version>
+		<Title>FMOD Soundbank Parser</Title>
 		<Description>FMOD Soundbank file parser library for .NET</Description>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<PackageProjectUrl>https://github.com/Masusder/FModBankParser</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/Masusder/FModBankParser.git</RepositoryUrl>
+		<PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
 	</PropertyGroup>
 
 	<ItemGroup>
