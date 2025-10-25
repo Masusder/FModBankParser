@@ -25,11 +25,11 @@ public class ParameterNode
     public ParameterNode(BinaryReader Ar)
     {
         BaseGuid = new FModGuid(Ar);
+
         if (FModReader.Version >= 0x70) Flags = Ar.ReadInt32();
         if (FModReader.Version < 0x70) Ar.ReadBoolean();
 
         Type = (EFModStudioParameterType)Ar.ReadUInt32();
-
         Name = FModReader.ReadString(Ar);
         Minimum = Ar.ReadSingle();
         Maximum = Ar.ReadSingle();
@@ -37,12 +37,10 @@ public class ParameterNode
         Velocity = Ar.ReadSingle();
 
         if (FModReader.Version < 0x8f) SeekSpeed = Ar.ReadSingle();
-
         if (FModReader.Version < 0x70) Ar.ReadBoolean();
-
-        if (FModReader.Version >= 0x52 && FModReader.Version <= 0x8E) SeekSpeedDown = Ar.ReadSingle();
-
         if (FModReader.Version < 0x60) FModReader.ReadElemListImp<FModGuid>(Ar);
+        if (FModReader.Version > 0x52 && FModReader.Version <= 0x8E) SeekSpeedDown = Ar.ReadSingle();
+        if (FModReader.Version > 0x52 && FModReader.Version <= 0x6F) Ar.ReadBoolean();
 
         Labels = FModReader.Version >= 0x8b ? FModReader.ReadVersionedElemListImp(Ar, FModReader.ReadString) : [];
     }

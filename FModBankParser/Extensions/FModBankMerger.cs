@@ -1,6 +1,7 @@
 ﻿using FModBankParser;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
@@ -35,6 +36,9 @@ internal static class FModBankMerger
             foreach (var file in variants.Where(File.Exists))
             {
                 using var reader = new BinaryReader(File.OpenRead(file));
+#if DEBUG
+                Debug.WriteLine(file);
+#endif
                 var fmod = new FModReader(reader, baseName, encryptionKey);
 
                 if (merged == null)

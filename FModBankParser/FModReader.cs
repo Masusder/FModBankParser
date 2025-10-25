@@ -300,7 +300,10 @@ public class FModReader
 
             if (Ar.BaseStream.Position != nextNode)
             {
-                Debug.WriteLine($"Warning: chunk {nodeId} did not parse fully (at {Ar.BaseStream.Position}, should be {nextNode})");
+                if (nodeId != ENodeId.CHUNKID_LIST)
+                {
+                    Debug.WriteLine($"Warning: chunk {nodeId} did not parse fully (at {Ar.BaseStream.Position}, should be {nextNode})");
+                }
                 Ar.BaseStream.Position = nextNode;
             }
         }
