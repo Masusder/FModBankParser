@@ -6,8 +6,9 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Authors>Masusder</Authors>
 		<PackageId>FModBankParser</PackageId>
+		<PackageTags>FMOD;Soundbank;Audio</PackageTags>
 		<Nullable>enable</Nullable>
-		<Version>1.0.0</Version>
+		<Version>1.0.1</Version>
 		<Title>FMOD Soundbank Parser</Title>
 		<Description>FMOD Soundbank file parser library for .NET</Description>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>

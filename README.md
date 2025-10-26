@@ -69,18 +69,18 @@ Project comes with an example FModBankParser.Demo that you can use.
 Compile the project or download the demo executable from the [Releases](https://github.com/Masusder/FModBankParser/releases) tab, then run it from a terminal:
 
 ```bash
-FModBankParser.Demo --path <file_or_folder> [--key <encryptionKey>] [--export-audio] [--output <outputFolder>]
+FModBankParser.Demo <file_or_folder> [--key <encryptionKey>] [--export-audio] [--output <outputFolder>]
 ```
 
 ### Options
 
 | Option                | Description                                                            |
 |-----------------------|------------------------------------------------------------------------|
-| `--help` `-h`         | Print help options                                                     |
-| `--path` `-p`         | Path to a FMOD `.bank` file or folder containing soundbanks (required) |
+| `path`                | Path to a FMOD `.bank` file or folder containing soundbanks (required) |
 | `--key` `-k`          | Optional encryption key string for encrypted soundbanks                |
 | `--export-audio` `-e` | Flag if you want to export audio from the soundbanks                   |
 | `--output` `-o`       | Optional output folder for exported audio (default: `ExportedAudio`)   |
+| `--help` `-h`         | Print help options                                                     |
 
 ## API Usage Examples
 

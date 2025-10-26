@@ -60,7 +60,7 @@ public class FModReader
         string riff = Encoding.ASCII.GetString(Ar.ReadBytes(4));
         if (riff != "RIFF") throw new Exception("Not a valid RIFF file");
 
-        int riffSize = Ar.ReadInt32();
+        uint riffSize = Ar.ReadUInt32();
         string fileType = Encoding.ASCII.GetString(Ar.ReadBytes(4));
         if (fileType != "FEV ") throw new Exception("Not a valid FMOD bank");
 
@@ -98,7 +98,7 @@ public class FModReader
             }
 
             var nodeId = (ENodeId)rawNodeValue;
-            int nodeSize = Ar.ReadInt32();
+            uint nodeSize = Ar.ReadUInt32();
             long nextNode = nodeStart + 8 + nodeSize;
 
             if (nodeSize == 0)

@@ -7,10 +7,10 @@ public class Program
 {
     public static int Main(string[] args)
     {
-        var pathOption = new Option<FileSystemInfo>("--path", ["-p"]) 
-        { 
-            Description = "Path to a FMOD .bank file or folder containing soundbanks",
-            Required = true 
+        var pathArgument = new Argument<FileSystemInfo>("path")
+        {
+            Description = "Path to a FMOD .bank file or folder containing soundbanks (drag-and-drop supported)",
+            Arity = ArgumentArity.ExactlyOne
         };
         var keyOption = new Option<string>("--key", ["-k"]) { Description = "Optional encryption key" };
         var exportOption = new Option<bool>("--export-audio", ["-e"]) { Description = "Whether to export audio files" };
@@ -22,20 +22,28 @@ public class Program
 
         var rootCommand = new RootCommand("FMOD Soundbank Parser Demo")
         {
-            pathOption,
+            pathArgument,
             keyOption,
             exportOption,
             outDirOption
         };
 
         rootCommand.SetAction(parseResult => RunParseAndProcess(
-            parseResult.GetValue(pathOption),
+            parseResult.GetValue(pathArgument),
             parseResult.GetValue(keyOption),
             parseResult.GetValue(exportOption),
             parseResult.GetValue(outDirOption)
         ));
 
-        return rootCommand.Parse(args).Invoke();
+        int result = rootCommand.Parse(args).Invoke();
+
+        if (Environment.UserInteractive)
+        {
+            Console.WriteLine("\nPress any key to exit...");
+            Console.ReadKey();
+        }
+
+        return result;
     }
 
     private static void RunParseAndProcess(FileSystemInfo? fsInfo, string? keyString, bool exportAudio, DirectoryInfo? outDir)
@@ -43,8 +51,8 @@ public class Program
         var outputDirectory = outDir ?? new DirectoryInfo("ExportedAudio");
         byte[]? encryptionKey = string.IsNullOrEmpty(keyString) ? null : Encoding.UTF8.GetBytes(keyString);
 
-        try
-        {
+        //try
+        //{
             if (fsInfo is FileInfo file)
             {
                 if (!file.Extension.Equals(".bank", StringComparison.OrdinalIgnoreCase))
@@ -63,11 +71,16 @@ public class Program
             {
                 Console.Error.WriteLine("Unsupported path type.");
             }
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"Unhandled exception: {ex.GetType().Name}: {ex.Message}");
-        }
+        //}
+        //catch (Exception ex)
+        //{
+        //    Console.Error.WriteLine($"Unhandled exception: {ex.GetType().Name}: {ex.Message}");
+
+        //    if (System.Diagnostics.Debugger.IsAttached)
+        //    {
+        //        System.Diagnostics.Debugger.Break();
+        //    }
+        //}
     }
 
     private static void ProcessBankFile(FileInfo file, byte[]? encryptionKey, bool shouldExport, DirectoryInfo outDir)
