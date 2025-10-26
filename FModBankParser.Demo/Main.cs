@@ -51,8 +51,8 @@ public class Program
         var outputDirectory = outDir ?? new DirectoryInfo("ExportedAudio");
         byte[]? encryptionKey = string.IsNullOrEmpty(keyString) ? null : Encoding.UTF8.GetBytes(keyString);
 
-        //try
-        //{
+        try
+        {
             if (fsInfo is FileInfo file)
             {
                 if (!file.Extension.Equals(".bank", StringComparison.OrdinalIgnoreCase))
@@ -71,16 +71,16 @@ public class Program
             {
                 Console.Error.WriteLine("Unsupported path type.");
             }
-        //}
-        //catch (Exception ex)
-        //{
-        //    Console.Error.WriteLine($"Unhandled exception: {ex.GetType().Name}: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Unhandled exception: {ex.GetType().Name}: {ex.Message}");
 
-        //    if (System.Diagnostics.Debugger.IsAttached)
-        //    {
-        //        System.Diagnostics.Debugger.Break();
-        //    }
-        //}
+            if (System.Diagnostics.Debugger.IsAttached)
+            {
+                System.Diagnostics.Debugger.Break();
+            }
+        }
     }
 
     private static void ProcessBankFile(FileInfo file, byte[]? encryptionKey, bool shouldExport, DirectoryInfo outDir)
