@@ -9,49 +9,49 @@ namespace FModBankParser.Extensions;
 
 internal static class FModBankMerger
 {
+    private const string BankSuffix = ".bank";
+    private const string StreamsSuffix = ".streams.bank";
+    private const string AssetsSuffix = ".assets.bank";
+
     // Events and samples can be divided between streams/assets/bank
     // Simplest way to handle this is to merge all related banks into a single FModReader
     internal static List<FModReader> MergeBanks(string folderPath, byte[]? encryptionKey = null)
     {
-        var files = Directory.GetFiles(folderPath, "*.bank", SearchOption.AllDirectories);
-        var baseNames = files
-            .Select(f => Path.GetFileName(f)
-                .Replace(".streams.bank", "")
-                .Replace(".assets.bank", "")
-                .Replace(".bank", ""))
-            .Distinct();
+        var allFiles = Directory.GetFiles(folderPath, "*.bank", SearchOption.AllDirectories);
+        if (allFiles.Length == 0)
+            return [];
+
+        var filesByFolder = allFiles.GroupBy(f => Path.GetDirectoryName(f) ?? "");
 
         var mergedReaders = new List<FModReader>();
-        foreach (var baseName in baseNames)
+        foreach (var folderGroup in filesByFolder)
         {
-            var variants = files.Where(f =>
-            {
-                var fn = Path.GetFileName(f);
-                return fn.Equals(baseName + ".bank", StringComparison.OrdinalIgnoreCase)
-                    || fn.Equals(baseName + ".assets.bank", StringComparison.OrdinalIgnoreCase)
-                    || fn.Equals(baseName + ".streams.bank", StringComparison.OrdinalIgnoreCase);
-            }).ToArray();
+            var groupedByBase = folderGroup
+                .GroupBy(f => Path.GetFileName(f)
+                    .Replace(StreamsSuffix, "")
+                    .Replace(AssetsSuffix, "")
+                    .Replace(BankSuffix, ""))
+                .ToDictionary(g => g.Key, g => g.ToArray());
 
-            FModReader? merged = null;
-            foreach (var file in variants.Where(File.Exists))
+            foreach (var (baseName, variants) in groupedByBase)
             {
-                using var reader = new BinaryReader(File.OpenRead(file));
+                FModReader? merged = null;
+                foreach (var file in variants)
+                {
+                    using var reader = new BinaryReader(File.OpenRead(file));
 #if DEBUG
-                Debug.WriteLine(file);
+                    Debug.WriteLine(file);
 #endif
-                var fmod = new FModReader(reader, baseName, encryptionKey);
+                    var fmod = new FModReader(reader, baseName, encryptionKey);
 
-                if (merged == null)
-                {
-                    merged = fmod;
+                    merged ??= fmod;
+                    if (merged != fmod)
+                        merged.Merge(fmod);
                 }
-                else
-                {
-                    merged.Merge(fmod);
-                }
+
+                if (merged != null)
+                    mergedReaders.Add(merged);
             }
-
-            if (merged != null) mergedReaders.Add(merged);
         }
 
         return mergedReaders;
