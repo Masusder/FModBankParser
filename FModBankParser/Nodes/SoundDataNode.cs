@@ -1,5 +1,6 @@
 ﻿using Fmod5Sharp;
 using Fmod5Sharp.FmodTypes;
+using SubstreamSharp;
 using System.Diagnostics;
 
 namespace FModBankParser.Nodes;
@@ -10,32 +11,24 @@ public class SoundDataNode
 
     public SoundDataNode(BinaryReader Ar, long nodeStart, uint size, int soundDataIndex)
     {
-        byte[] sndChunk = Ar.ReadBytes((int)size);
-
         uint fsbOffset = FModReader.SoundDataInfo!.Header[soundDataIndex].FSBOffset;
-
-        var relativeOffset = (int)(fsbOffset - nodeStart) - 8;
-
-        byte[] fsbBytes = sndChunk[relativeOffset..];
+        var relativeOffset = fsbOffset - nodeStart - 8;
+        Stream fsbStream = Ar.BaseStream.Substream(fsbOffset, size);
 
         // In case FSB5 is encrypted
-        if (!FSB5Decryption.IsFSB5Header(fsbBytes))
+        if (!FSB5Decryption.IsFSB5Header(fsbStream))
         {
             Debug.WriteLine($"Encrypted FSB5 header at {fsbOffset}");
-            FSB5Decryption.Decrypt(fsbBytes, FModReader.EncryptionKey);
+            fsbStream = FSB5Decryption.Decrypt(fsbStream, FModReader.EncryptionKey);
         }
 
         try
         {
-            if (FsbLoader.TryLoadFsbFromByteArray(fsbBytes, out var bank) && bank != null)
+            if (FsbLoader.TryLoadFsbFromStream(fsbStream, out var bank) && bank != null)
             {
                 SoundBank = bank;
+                Ar.BaseStream.Position = fsbOffset - relativeOffset + size;
                 Debug.WriteLine($"FSB5 parsed successfully, samples: {bank.Samples.Count}");
-                for (int i = 0; i < bank.Samples.Count; i++)
-                {
-                    var sample = bank.Samples[i];
-                    //Debug.WriteLine($"Sample: {sample.Name}, Index: {i}");
-                }
             }
             else
             {

@@ -1,0 +1,4 @@
+[submodule "Fmod5Sharp"]
+	path = Fmod5Sharp
+	url = https://github.com/Masusder/Fmod5Sharp.git
+	branch = improved

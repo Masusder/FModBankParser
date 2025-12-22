@@ -1,5 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
 	<PropertyGroup>
 		<OutputType>Library</OutputType>
 		<TargetFramework>net10.0</TargetFramework>
@@ -18,16 +17,18 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Fmod5Sharp" Version="3.0.1" />
+		<None Include="..\README.md" Pack="true" PackagePath="" Link="README.md" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Include="..\README.md" Pack="true" PackagePath="" Link="README.md" />
+		<ProjectReference Include="..\Fmod5Sharp\Fmod5Sharp\Fmod5Sharp.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="SubstreamSharp" Version="1.0.3" />
 	</ItemGroup>
 
 	<PropertyGroup>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 	</PropertyGroup>
-
-
 </Project>

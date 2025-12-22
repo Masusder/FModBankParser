@@ -1,4 +1,5 @@
 ﻿using System.CommandLine;
+using System.Diagnostics;
 using System.Text;
 
 namespace FModBankParser.Demo;
@@ -35,15 +36,7 @@ public class Program
             parseResult.GetValue(outDirOption)
         ));
 
-        int result = rootCommand.Parse(args).Invoke();
-
-        if (Environment.UserInteractive)
-        {
-            Console.WriteLine("\nPress any key to exit...");
-            Console.ReadKey();
-        }
-
-        return result;
+        return rootCommand.Parse(args).Invoke();
     }
 
     private static void RunParseAndProcess(FileSystemInfo? fsInfo, string? keyString, bool exportAudio, DirectoryInfo? outDir)
@@ -53,33 +46,29 @@ public class Program
 
         try
         {
-            if (fsInfo is FileInfo file)
+            switch (fsInfo)
             {
-                if (!file.Extension.Equals(".bank", StringComparison.OrdinalIgnoreCase))
-                {
-                    Console.Error.WriteLine($"The file must be a .bank file: {file.Name}");
-                    return;
-                }
+                case FileInfo file:
+                    if (!file.Extension.Equals(".bank", StringComparison.OrdinalIgnoreCase))
+                    {
+                        Console.Error.WriteLine($"The file must be a .bank file: {file.Name}");
+                        return;
+                    }
 
-                ProcessBankFile(file, encryptionKey, exportAudio, outputDirectory);
-            }
-            else if (fsInfo is DirectoryInfo dir)
-            {
-                ProcessBankDirectory(dir, encryptionKey, exportAudio, outputDirectory);
-            }
-            else
-            {
-                Console.Error.WriteLine("Unsupported path type.");
+                    ProcessBankFile(file, encryptionKey, exportAudio, outputDirectory);
+                    return;
+                case DirectoryInfo dir:
+                    ProcessBankDirectory(dir, encryptionKey, exportAudio, outputDirectory);
+                    break;
+                case not { Exists: true }:
+                    Console.Error.WriteLine("Unsupported path type.");
+                    return;
             }
         }
         catch (Exception ex)
         {
+            if (Debugger.IsAttached) throw; // To preserve stack trace during debugging
             Console.Error.WriteLine($"Unhandled exception: {ex.GetType().Name}: {ex.Message}");
-
-            if (System.Diagnostics.Debugger.IsAttached)
-            {
-                System.Diagnostics.Debugger.Break();
-            }
         }
     }
 
