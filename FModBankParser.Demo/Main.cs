@@ -36,7 +36,15 @@ public class Program
             parseResult.GetValue(outDirOption)
         ));
 
-        return rootCommand.Parse(args).Invoke();
+        int result = rootCommand.Parse(args).Invoke();
+
+        if (Environment.UserInteractive)
+        {
+            Console.WriteLine("\nPress any key to exit..");
+            Console.ReadKey();
+        }
+
+        return result;
     }
 
     private static void RunParseAndProcess(FileSystemInfo? fsInfo, string? keyString, bool exportAudio, DirectoryInfo? outDir)
