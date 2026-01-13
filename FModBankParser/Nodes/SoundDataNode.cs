@@ -1,5 +1,6 @@
 ﻿using Fmod5Sharp;
 using Fmod5Sharp.FmodTypes;
+using Fmod5Sharp.Util;
 using SubstreamSharp;
 using System.Diagnostics;
 
@@ -29,6 +30,11 @@ public class SoundDataNode
                 SoundBank = bank;
                 Ar.BaseStream.Position = fsbOffset - relativeOffset + size;
                 Debug.WriteLine($"FSB5 parsed successfully, samples: {bank.Samples.Count}");
+#if DEBUG
+                var audioType = bank.Header.AudioType;
+                if (!audioType.IsSupported())
+                    Debug.WriteLine($"Soundbank uses unsupported audio format: {audioType}");
+#endif
             }
             else
             {
