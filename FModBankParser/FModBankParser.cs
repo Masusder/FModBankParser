@@ -120,12 +120,16 @@ public class FModBankParser
             for (int i = 0; i < bank.Samples.Count; i++)
             {
                 var sample = bank.Samples[i];
-                if (!sample.RebuildAsStandardFileFormat(out var dataBytes, out var fileExtension))
-                    continue;
 
                 string sampleName = string.IsNullOrWhiteSpace(sample.Name)
                     ? $"Sample_{i}"
                     : sample.Name;
+
+                if (!sample.RebuildAsStandardFileFormat(out var dataBytes, out var fileExtension))
+                {
+                    Debug.WriteLine($"Failed to rebuild sample '{sample.Name}' in {reader.BankName}");
+                    continue;
+                }
 
                 FileInfo filePath = new(Path.Combine(bankFolder.FullName, $"{sampleName}.{fileExtension}"));
 
