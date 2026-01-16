@@ -127,7 +127,7 @@ public class FModBankParser
 
                 if (!sample.RebuildAsStandardFileFormat(out var dataBytes, out var fileExtension))
                 {
-                    Debug.WriteLine($"Failed to rebuild sample '{sample.Name}' in {reader.BankName}");
+                    Debug.WriteLine($"Failed to rebuild sample '{sampleName}' in {reader.BankName}");
                     continue;
                 }
 
