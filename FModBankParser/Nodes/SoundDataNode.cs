@@ -17,10 +17,10 @@ public class SoundDataNode
         Stream fsbStream = Ar.BaseStream.Substream(fsbOffset, size);
 
         // In case FSB5 is encrypted
-        if (!FSB5Decryption.IsFSB5Header(fsbStream))
+        if (!Fsb5Decryption.IsFSB5Header(fsbStream))
         {
             Debug.WriteLine($"Encrypted FSB5 header at {fsbOffset}");
-            fsbStream = FSB5Decryption.Decrypt(fsbStream, FModReader.EncryptionKey);
+            fsbStream = Fsb5Decryption.Decrypt(fsbStream, FModReader.EncryptionKey);
         }
 
         try
