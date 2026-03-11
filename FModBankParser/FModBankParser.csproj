@@ -7,7 +7,7 @@
 		<PackageId>FModBankParser</PackageId>
 		<PackageTags>FMOD;Soundbank;Audio</PackageTags>
 		<Nullable>enable</Nullable>
-		<Version>1.0.1</Version>
+		<Version>1.2.0</Version>
 		<Title>FMOD Soundbank Parser</Title>
 		<Description>FMOD Soundbank file parser library for .NET</Description>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>

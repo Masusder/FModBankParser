@@ -99,9 +99,10 @@ internal static class EventNodesResolver
                 {
                     if (reader.WavEntries.TryGetValue(wavInstr.WaveformResourceGuid, out var entry) &&
                         reader.SoundBankData.Count > 0 &&
-                        entry.SoundBankIndex < reader.SoundBankData[entry.SubsoundIndex].Samples.Count)
+                        entry.SoundBankIndex < reader.SoundBankData.Count &&
+                        entry.SubsoundIndex < reader.SoundBankData[entry.SoundBankIndex].Samples.Count)
                     {
-                        result.Add(reader.SoundBankData[entry.SubsoundIndex].Samples[entry.SoundBankIndex]);
+                        result.Add(reader.SoundBankData[entry.SoundBankIndex].Samples[entry.SubsoundIndex]);
                     }
                 }
 
@@ -141,10 +142,10 @@ internal static class EventNodesResolver
             var wavGuid = kvp.Key;
             var entry = kvp.Value;
 
-            if (reader.SoundBankData.Count <= 0 || entry.SoundBankIndex >= reader.SoundBankData[entry.SubsoundIndex].Samples.Count)
+            if (reader.SoundBankData.Count <= 0 || entry.SubsoundIndex >= reader.SoundBankData[entry.SoundBankIndex].Samples.Count)
                 continue;
 
-            var sample = reader.SoundBankData[entry.SubsoundIndex].Samples[entry.SoundBankIndex];
+            var sample = reader.SoundBankData[entry.SoundBankIndex].Samples[entry.SubsoundIndex];
 
             if (!allResolved.Contains(sample.Name!))
             {

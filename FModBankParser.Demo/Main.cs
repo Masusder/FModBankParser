@@ -1,4 +1,5 @@
-﻿using System.CommandLine;
+﻿using FModBankParser.Enums;
+using System.CommandLine;
 using System.Diagnostics;
 using System.Text;
 
@@ -141,10 +142,54 @@ public class Program
         }
     }
 
-    private static void PrintReaderSummary(dynamic reader)
+    private static void PrintReaderSummary(FModReader reader)
     {
+        // Metadata & Header
+        var version = reader.BankInfo.FileVersion;
         Console.WriteLine($"\nSoundbank: {reader.BankName} (GUID: {reader.GetBankGuid()})");
-        Console.WriteLine($"FMOD Version: {reader.BankInfo.FileVersion}");
-        Console.WriteLine($"Event count: {reader.EventNodes.Count}");
+        Console.WriteLine($"FMOD Version: {version} ({(EFModVersion)version})");
+
+        if (reader.StringTable?.RadixTree is { Guids: var guids } tree)
+        {
+            Console.WriteLine("This is string bank, its purpose is to convert GUIDs to human readable strings, for example:");
+            // Print just first three entries found in the string table, just to give an idea
+            var entries = guids.Take(3).Select((g, i) => {
+                tree.TryGetStringByIndex(i, out var p);
+                return $"{g}: {p}";
+            });
+
+            foreach (var line in entries) 
+                Console.WriteLine(line);
+
+            Console.WriteLine("etc.");
+            return;
+        }
+
+        // Audio Data
+        Console.WriteLine($"Total Audio Samples: {reader.SoundBankData.Sum(b => b.Header.NumSamples)}");
+        if (reader.SoundBankData.Count is not 0) 
+            Console.WriteLine($"Audio Codecs Used: {string.Join(", ", reader.SoundBankData.Select(b => b.Header.AudioType).Distinct())}");
+
+        if (reader.SoundTable is not null)
+            Console.WriteLine($"This soundbank uses Sound Table, which replaces Waveform Entries. Total samples used in Sound Table: {reader.SoundTable.Keys.Length}");
+
+        // Nodes
+        Console.WriteLine($"Events: {reader.EventNodes.Count}");
+        Console.WriteLine($"Buses: {reader.BusNodes.Count}");
+        Console.WriteLine($"Effects: {reader.EffectNodes.Count}");
+        Console.WriteLine($"Timelines: {reader.TimelineNodes.Count}");
+        Console.WriteLine($"Transitions: {reader.TransitionNodes.Count}");
+        Console.WriteLine($"Instruments: {reader.InstrumentNodes.Count}");
+        Console.WriteLine($"Wav Entries: {reader.WavEntries.Count}");
+        Console.WriteLine($"Parameters: {reader.ParameterNodes.Count}");
+        Console.WriteLine($"Modulators: {reader.ModulatorNodes.Count}");
+        Console.WriteLine($"Curves: {reader.CurveNodes.Count}");
+        Console.WriteLine($"Properties: {reader.PropertyNodes.Count}");
+        Console.WriteLine($"Mappings: {reader.MappingNodes.Count}");
+        Console.WriteLine($"Parameter Layouts: {reader.ParameterLayoutNodes.Count}");
+        Console.WriteLine($"Controllers: {reader.ControllerNodes.Count}");
+        Console.WriteLine($"Snapshots: {reader.SnapshotNodes.Count}");
+        Console.WriteLine($"VCAs: {reader.VCANodes.Count}");
+        Console.WriteLine($"Controller Owners: {reader.ControllerOwnerNodes.Count}");
     }
 }
