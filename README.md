@@ -8,16 +8,19 @@
 [![License](https://img.shields.io/github/license/Masusder/FModBankParser?style=for-the-badge&color=blue)](https://github.com/Masusder/FModBankParser/blob/main/LICENSE)
 [![NuGet](https://img.shields.io/badge/nuget-FModBankParser-blue?style=for-the-badge&color=dodgerblue)](https://github.com/Masusder/FModBankParser/packages)
 [![Stars](https://img.shields.io/github/stars/Masusder/FModBankParser?style=for-the-badge&color=F7DF1E)](https://github.com/Masusder/FModBankParser/stargazers)
-[![Releases](https://img.shields.io/github/downloads/Masusder/FModBankParser/total?style=for-the-badge&color=00ffa2&label=Downloads)](https://github.com/Masusder/FModBankParser/releases)
+[![Releases](https://img.shields.io/github/downloads/Masusder/FModBankParser/total?style=for-the-badge&color=29903b&label=Downloads)](https://github.com/Masusder/FModBankParser/releases)
+
+**C# library for parsing and extracting FMOD Studio sound banks**
+
+[Installation](#installation) • [API Examples](#api-usage-examples) • [CLI Demo](#demo-cli-usage) • [Compatibility](#tested-fmod-versions)
 
 </div>
-
-> **C# library for parsing and extracting FMOD Studio sound banks, with a primary focus on Unreal Engine projects.**
 
 FModBankParser allows you to **analyze, extract, and inspect** FMOD `.bank` files of any kind, including those used in commercial games and standalone FMOD projects.
 It supports a wide range of FMOD versions.
 
-This library was originally developed for the [FModel](https://github.com/4sval/FModel) project, if you are only interested in exploring or extracting FMOD audio from UE games you should check it out first.
+> [!TIP]
+> This library was originally developed for the [FModel](https://github.com/4sval/FModel) project, if you are only interested in exploring or extracting FMOD audio from UE games you should check it out first.
 
 ---
 
@@ -27,10 +30,6 @@ This project was **reverse-engineered by studying publicly available SDKs, docum
 All work was independently performed to better understand FMOD soundbank formats within Unreal Engine projects.
 
 No proprietary, confidential, or internal source code from Firelight Technologies was used in the development of this library.
-
----
-
-## Features
 
 This library is intended **only for parsing, reading, and extracting** FMOD `.bank`, `.assets.bank`, `.streams.bank`, and `.strings.bank` files.  
 It is **not designed** and will **never** be used to rebuild or modify soundbanks.
