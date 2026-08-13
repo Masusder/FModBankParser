@@ -58,6 +58,19 @@ public class SoundTable
         return -1;
     }
 
+    public ulong GetKeyByIndex(uint index)
+    {
+        // Tried a binary search, didn't work.
+        for (int i = 0; i != Indices.Length; ++i)
+        {
+            if (Indices[i].Value == index)
+            {
+                return Keys[i];
+            }
+        }
+        return 0;
+    }
+
     #region Readers
     private static ulong[] ReadSimpleArrayImp(BinaryReader Ar)
     {

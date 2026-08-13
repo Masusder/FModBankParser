@@ -122,7 +122,10 @@ public class FModBankParser
                 var sample = bank.Samples[i];
 
                 string sampleName = string.IsNullOrWhiteSpace(sample.Name)
-                    ? $"Sample_{i}"
+                    ? (reader.SoundTable == null
+                        ? $"Sample_{i}"
+                        : $"Sample_{i}_hash_{reader.SoundTable.GetKeyByIndex((uint)i)}"
+                        )
                     : sample.Name;
 
                 if (!sample.RebuildAsStandardFileFormat(out var dataBytes, out var fileExtension) || dataBytes is not { Length: > 0 })
