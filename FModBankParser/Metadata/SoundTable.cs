@@ -1,9 +1,4 @@
 ﻿using FModBankParser.Objects;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FModBankParser.Metadata;
 
@@ -56,6 +51,21 @@ public class SoundTable
         }
 
         return -1;
+    }
+
+    public bool TryGetKeyByIndex(int index, out ulong key)
+    {
+        for (var i = 0; i < Indices.Length; i++)
+        {
+            if (Indices[i].Value != index)
+                continue;
+
+            key = Keys[i];
+            return true;
+        }
+
+        key = default;
+        return false;
     }
 
     #region Readers

@@ -1,13 +1,7 @@
 ﻿using Fmod5Sharp.FmodTypes;
-using FModBankParser;
 using FModBankParser.Extensions;
 using FModBankParser.Objects;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FModBankParser;
 
@@ -121,9 +115,13 @@ public class FModBankParser
             {
                 var sample = bank.Samples[i];
 
-                string sampleName = string.IsNullOrWhiteSpace(sample.Name)
-                    ? $"Sample_{i}"
-                    : sample.Name;
+                var sampleName = sample.Name;
+                if (string.IsNullOrWhiteSpace(sampleName))
+                {
+                    sampleName = reader.SoundTable?.TryGetKeyByIndex(i, out var key) == true
+                        ? $"Sample_{i}_hash_{key:X16}"
+                        : $"Sample_{i}";
+                }
 
                 if (!sample.RebuildAsStandardFileFormat(out var dataBytes, out var fileExtension) || dataBytes is not { Length: > 0 })
                 {
